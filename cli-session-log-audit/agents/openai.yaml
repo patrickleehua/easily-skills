@@ -1,0 +1,4 @@
+interface:
+  display_name: "会话日志审查"
+  short_description: "跨 CLI 导出消息与 Agent 调用关系并审查编排"
+  default_prompt: "使用 $cli-session-log-audit 审查当前工作区会话并导出日志。"

@@ -1,0 +1,18 @@
+/* 暖白简报：衬线标题、单栏阅读，适合叙事与正式归档。 */
+.theme-editorial{--ink:#333931;--muted:#676c61;--accent:#657351;--paper:#fffdf8;--canvas:#eeece5;--line:#deded2;--tint:#f1f2e9}
+.theme-editorial .report{max-width:960px;border-top:0;padding:48px 64px 24px}
+.theme-editorial .toolbar{max-width:960px}
+.theme-editorial .brand{padding-bottom:18px;border-bottom:3px double var(--line)}
+.theme-editorial h1{font-family:var(--serif);font-size:40px;letter-spacing:.025em;font-weight:500}
+.theme-editorial .heading{margin:30px 0}
+.theme-editorial .summary{background:transparent;border-left:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:22px 0}
+.theme-editorial .metrics{border:0;border-bottom:1px solid var(--line)}
+.theme-editorial .metric{padding:0 24px 22px 0;margin-right:24px}
+.theme-editorial .metric-value{font-family:var(--serif);font-weight:400}
+.theme-editorial .sections{grid-template-columns:1fr;gap:20px}
+.theme-editorial .section{display:grid;grid-template-columns:155px minmax(0,1fr);gap:26px}
+.theme-editorial .section-head{border-bottom:0;padding-top:16px;align-items:baseline}
+.theme-editorial .section-items{border-top:1px solid var(--line)}
+.theme-editorial h2{font-family:var(--serif);font-size:19px}
+@media(max-width:720px){.theme-editorial .report{padding:28px 24px 20px}.theme-editorial h1{font-size:30px}.theme-editorial .section{display:block}.theme-editorial .section-head{padding-top:0}.theme-editorial .metric{margin-right:0;padding:16px}}
+@media print{.theme-editorial .section{display:block}.theme-editorial .section-head{padding:0 0 8px}}

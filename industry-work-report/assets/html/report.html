@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>$title</title>
+  <style>$styles</style>
+</head>
+<body class="theme-$theme">
+  <div class="toolbar"><span>$theme_name · 工作报告</span><button type="button" onclick="window.print()">打印 / 存为 PDF</button></div>
+  <main class="report">
+    <header class="masthead">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>工作简报 <span class="edition">WORK REPORT</span></div>
+      <div class="heading"><div><p class="eyebrow">$eyebrow</p><h1>$title</h1><p class="subtitle">$subtitle</p></div>$date_block</div>
+      $demo_banner
+    </header>
+    $summary
+    $metrics
+    <div class="sections">$sections</div>
+    $source
+    <footer><span>$footer</span><span>工作有据 · 进展清晰</span></footer>
+  </main>
+</body>
+</html>
