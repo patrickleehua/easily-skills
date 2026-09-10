@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import itertools
 import json
 import os
 import re
@@ -14,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any, Iterable
 
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
 AGENT_CALLS = {
     "spawn_agent", "followup_task", "send_message", "interrupt_agent",
     "agent", "task", "sendmessage", "subagent", "spawn_subagent",
@@ -34,9 +35,23 @@ CURSOR_CONTEXT_TAGS = (
     "user_info", "git_status", "open_files", "open_and_recently_viewed_files",
     "recently_viewed_files", "linter_errors", "additional_data", "attached_files",
     "current_file", "cursor_rules", "user_rules", "project_layout",
-    "terminal_state", "selection", "selected_code", "system_reminder",
+    "terminal_state", "selection", "selected_code", "system_reminder", "timestamp",
+)
+# Host-injected user rows: they sit in the user role but no human typed them.
+SYSTEM_TAGS = (
+    "task-notification", "local-command-stdout", "local-command-stderr",
+    "local-command-caveat", "system-reminder", "ide_selection", "ide_opened_file",
 )
 CURSOR_TRANSCRIPT_DIR = "agent-transcripts"
+# Scalar Task/Agent arguments worth keeping besides target/task_name (no prompt bodies).
+CALL_EXTRA_KEYS = (
+    "resume", "resume_id", "resumeId", "agent_id", "agentId", "name", "model",
+    "run_in_background", "isolation", "mode", "subagent_type", "agent_type",
+)
+SOP_RE = re.compile(r"sop\.mjs\s+([a-z][a-z-]*)((?:[^\n&|;]*))")
+TASK_FLAG_RE = re.compile(r"--task(?:=|\s+)[\"']?([^\s\"']+)")
+PROMPT_PREVIEW = 200
+SOP_ARGV_LIMIT = 300
 
 
 def norm_path(value: str | Path | None) -> str | None:
@@ -83,6 +98,39 @@ def strip_cursor_context(text: str) -> str:
     for tag in CURSOR_CONTEXT_TAGS:
         text = re.sub(rf"<{tag}\b[^>]*>.*?</{tag}>", "", text, flags=re.IGNORECASE | re.DOTALL)
     return text
+
+
+def tag_inner(text: str, tag: str) -> str | None:
+    match = re.search(rf"<{tag}\b[^>]*>(.*?)</{tag}>", text, flags=re.IGNORECASE | re.DOTALL)
+    return match.group(1).strip() if match else None
+
+
+def classify_user_text(raw: str, meta_row: bool = False) -> tuple[str, str, str | None]:
+    """Return (text, origin, timestamp_hint) for a user-role row.
+
+    origin: ``human`` (typed by a person), ``command`` (a slash command the person
+    typed, rendered as ``/name args``) or ``system`` (host-injected notification,
+    local command output, reminder). Nothing is invented: system rows keep a short
+    label plus the host's own summary so the auditor can still count them.
+    """
+    timestamp_hint = tag_inner(raw, "timestamp")
+    command = tag_inner(raw, "command-name")
+    if command:
+        args = tag_inner(raw, "command-args") or ""
+        return redact(f"{command} {args}".strip()), "command", timestamp_hint
+    stripped = raw
+    seen: list[str] = []
+    for tag in SYSTEM_TAGS:
+        for match in re.finditer(rf"<{tag}\b[^>]*>(.*?)</{tag}>", stripped, flags=re.IGNORECASE | re.DOTALL):
+            summary = tag_inner(match.group(1), "summary") or re.sub(r"\s+", " ", match.group(1)).strip()[:80]
+            seen.append(f"[{tag}] {summary}".strip())
+        stripped = re.sub(rf"<{tag}\b[^>]*>.*?</{tag}>", "", stripped, flags=re.IGNORECASE | re.DOTALL)
+    text = redact(stripped)
+    if text and not meta_row:
+        return text, "human", timestamp_hint
+    if seen or meta_row:
+        return redact("\n".join(seen) or text), "system", timestamp_hint
+    return text, "human", timestamp_hint
 
 
 def slug_key(value: str | Path | None) -> str:
@@ -159,18 +207,115 @@ def empty_session(provider: str, path: Path) -> dict[str, Any]:
         "workspace": None,
         "started_at": None,
         "parent_session_id": None,
+        "parent_agent_id": None,
         "agent_path": None,
+        "agent": None,
         "project_slug": None,
         "messages": [],
         "calls": [],
+        "sop_calls": [],
+        "row_types": {},
         "warnings": [],
         "mtime": path.stat().st_mtime if path.exists() else 0,
     }
 
 
+def add_message(session: dict[str, Any], role: str, raw: str, timestamp: Any, ref: str,
+                phase: Any = None, meta_row: bool = False) -> None:
+    if role == "user":
+        text, origin, hint = classify_user_text(raw, meta_row)
+        timestamp = timestamp or hint
+    else:
+        text, origin = redact(raw), "assistant"
+    if not text:
+        return
+    session["messages"].append({
+        "seq": len(session["messages"]) + 1, "timestamp": timestamp, "role": role,
+        "origin": origin, "phase": phase, "text": text, "source_ref": ref,
+    })
+
+
+def add_queued_command(session: dict[str, Any], attachment: dict[str, Any], timestamp: Any, ref: str) -> None:
+    origin = attachment.get("origin") if isinstance(attachment.get("origin"), dict) else {}
+    text, kind, hint = classify_user_text(content_text(attachment.get("prompt")))
+    if not text:
+        return
+    if origin.get("kind") not in (None, "human"):
+        kind = "system"
+    session["messages"].append({
+        "seq": len(session["messages"]) + 1, "timestamp": attachment.get("timestamp") or timestamp or hint,
+        "role": "user", "origin": kind, "phase": "queued", "text": text, "source_ref": ref,
+    })
+
+
+def call_extra(args: dict[str, Any]) -> dict[str, Any]:
+    extra: dict[str, Any] = {}
+    for key in CALL_EXTRA_KEYS:
+        value = args.get(key)
+        if isinstance(value, (str, int, float, bool)) and value != "":
+            extra[key] = value
+    return extra
+
+
+def add_agent_call(session: dict[str, Any], name: str, args: dict[str, Any], call_id: Any,
+                   timestamp: Any, ref: str, encrypted: bool = False) -> None:
+    prompt = args.get("prompt") or args.get("message") or args.get("instructions")
+    session["calls"].append({
+        "seq": len(session["calls"]) + 1, "timestamp": timestamp, "name": name,
+        "target": args.get("target") or args.get("subagent_type") or args.get("agent_type") or args.get("to"),
+        "task_name": args.get("task_name") or args.get("description") or args.get("task"),
+        "call_id": call_id,
+        "status": "unavailable_encrypted" if encrypted else "called",
+        "extra": call_extra(args),
+        "prompt_preview": redact(str(prompt))[:PROMPT_PREVIEW] if isinstance(prompt, str) else None,
+        "source_ref": ref,
+    })
+
+
+def string_values(value: Any, depth: int = 0) -> Iterable[str]:
+    if depth > 3:
+        return
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, list):
+        for item in value:
+            yield from string_values(item, depth + 1)
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from string_values(item, depth + 1)
+
+
+def add_sop_calls(session: dict[str, Any], tool: str, args: dict[str, Any], timestamp: Any, ref: str) -> None:
+    """Record ``sop.mjs <cmd> ...`` invocations found in any tool input (orchestration metadata only)."""
+    for text in string_values(args):
+        if "sop.mjs" not in text:
+            continue
+        for match in SOP_RE.finditer(text):
+            cmd, rest = match.group(1), match.group(2)
+            task = TASK_FLAG_RE.search(rest)
+            session["sop_calls"].append({
+                "seq": len(session["sop_calls"]) + 1, "timestamp": timestamp, "tool": tool,
+                "cmd": cmd, "task": task.group(1) if task else None,
+                "argv": redact(re.sub(r"\s+", " ", rest).strip())[:SOP_ARGV_LIMIT],
+                "source_ref": ref,
+            })
+
+
+def handle_tool_block(session: dict[str, Any], name: str, args: dict[str, Any], call_id: Any,
+                      timestamp: Any, ref: str, encrypted: bool = False) -> None:
+    if name.lower().split(".")[-1] in AGENT_CALLS:
+        # sop.mjs text inside an agent prompt is an instruction to the child, not an executed command.
+        add_agent_call(session, name, args, call_id, timestamp, ref, encrypted)
+    else:
+        add_sop_calls(session, name, args, timestamp, ref)
+
+
+def count_row_type(session: dict[str, Any], kind: str) -> None:
+    session["row_types"][kind] = session["row_types"].get(kind, 0) + 1
+
+
 def parse_codex(path: Path) -> dict[str, Any]:
     session = empty_session("codex", path)
-    msg_seq = call_seq = 0
     meta_seen = False
     history_start: int | None = None
     for line_no, row in json_lines(path):
@@ -200,27 +345,15 @@ def parse_codex(path: Path) -> dict[str, Any]:
             role = payload.get("role")
             if role not in ("user", "assistant") or payload.get("author"):
                 continue
-            text = redact(content_text(payload.get("content")))
-            if text:
-                msg_seq += 1
-                session["messages"].append({
-                    "seq": msg_seq, "timestamp": timestamp, "role": role,
-                    "phase": payload.get("phase"), "text": text,
-                    "source_ref": source_ref(path, line_no),
-                })
+            add_message(session, role, content_text(payload.get("content")), timestamp,
+                        source_ref(path, line_no), payload.get("phase"))
         elif kind == "response_item" and payload.get("type") in ("function_call", "custom_tool_call"):
             name = str(payload.get("name") or "").split(".")[-1]
-            if name.lower() not in AGENT_CALLS:
-                continue
             args, encrypted = safe_arguments(payload.get("arguments") or payload.get("input"))
-            call_seq += 1
-            session["calls"].append({
-                "seq": call_seq, "timestamp": timestamp, "name": name,
-                "target": args.get("target"), "task_name": args.get("task_name"),
-                "call_id": payload.get("call_id"),
-                "status": "unavailable_encrypted" if encrypted else "called",
-                "source_ref": source_ref(path, line_no),
-            })
+            handle_tool_block(session, name, args, payload.get("call_id"), timestamp,
+                              source_ref(path, line_no), encrypted)
+        else:
+            count_row_type(session, f"{kind}/{payload.get('type')}" if payload.get("type") else str(kind))
     return session
 
 
@@ -229,10 +362,9 @@ def parse_claude_like(path: Path, provider: str) -> dict[str, Any]:
 
     Claude Code rows carry ``sessionId``/``cwd``/``isSidechain``/``agentId``; ``parentUuid``
     is the intra-session message chain and must NOT be read as a parent session.
-    Cursor rows carry only ``role`` and ``message``; identity comes from the path.
+    Cursor rows carry only top-level ``role`` and ``message``; identity comes from the path.
     """
     session = empty_session(provider, path)
-    msg_seq = call_seq = 0
     session_ids: list[str] = []
     agent_ids: list[str] = []
     sidechain = False
@@ -246,38 +378,58 @@ def parse_claude_like(path: Path, provider: str) -> dict[str, Any]:
         if row.get("agentId") and str(row["agentId"]) not in agent_ids:
             agent_ids.append(str(row["agentId"]))
         timestamp = row.get("timestamp") or row.get("created_at")
+        attachment = row.get("attachment") if isinstance(row.get("attachment"), dict) else None
+        if attachment and attachment.get("type") == "queued_command":
+            # Claude Code stores messages typed while the agent was busy here, not as user rows.
+            add_queued_command(session, attachment, timestamp, source_ref(path, line_no))
+            continue
         message = row.get("message") if isinstance(row.get("message"), dict) else row
         role = message.get("role") or row.get("role") or (row.get("type") if row.get("type") in ("user", "assistant") else None)
         content = message.get("content")
         if role in ("user", "assistant"):
-            text = redact(content_text(content))
-            if text:
-                msg_seq += 1
-                session["messages"].append({
-                    "seq": msg_seq, "timestamp": timestamp, "role": role,
-                    "phase": None, "text": text, "source_ref": source_ref(path, line_no),
-                })
+            if not session["started_at"] and timestamp:
+                session["started_at"] = timestamp
+            add_message(session, role, content_text(content), timestamp, source_ref(path, line_no),
+                        meta_row=bool(row.get("isMeta")))
+        else:
+            count_row_type(session, str(row.get("type") or role or "unknown"))
         blocks = content if isinstance(content, list) else []
         for block in blocks:
             if not isinstance(block, dict) or block.get("type") not in ("tool_use", "function_call"):
                 continue
-            name = str(block.get("name") or "")
-            if name.lower().split(".")[-1] not in AGENT_CALLS:
-                continue
             args = block.get("input") if isinstance(block.get("input"), dict) else {}
-            call_seq += 1
-            session["calls"].append({
-                "seq": call_seq, "timestamp": timestamp, "name": name,
-                "target": args.get("target") or args.get("subagent_type") or args.get("agent_type"),
-                "task_name": args.get("task_name") or args.get("description") or args.get("task"),
-                "call_id": block.get("id"), "status": "called",
-                "source_ref": source_ref(path, line_no),
-            })
+            handle_tool_block(session, str(block.get("name") or ""), args, block.get("id"),
+                              timestamp, source_ref(path, line_no))
     if provider == "cursor":
         apply_cursor_identity(session, path)
     else:
         apply_claude_identity(session, path, session_ids, agent_ids, sidechain)
+    first = next((m for m in session["messages"] if m["origin"] != "system"), None)
+    if first and first["role"] == "assistant":
+        session["warnings"].append(
+            "first visible non-system message is from the assistant; the transcript may start mid-task "
+            "(earlier turns are not in this file, which is not evidence they never happened)"
+        )
     return session
+
+
+def load_claude_meta(path: Path) -> dict[str, Any] | None:
+    """``agent-<id>.meta.json`` next to a subagent transcript: agentType/name/description/parentAgentId/spawnDepth."""
+    meta_path = path.with_name(path.stem + ".meta.json")
+    if not meta_path.exists():
+        return None
+    try:
+        value = json.loads(meta_path.read_text(encoding="utf-8", errors="replace"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    if not isinstance(value, dict):
+        return None
+    return {
+        "type": value.get("agentType"), "name": value.get("name"),
+        "description": value.get("description"), "tool_use_id": value.get("toolUseId"),
+        "parent_agent_id": value.get("parentAgentId"), "spawn_depth": value.get("spawnDepth"),
+        "source_path": str(meta_path),
+    }
 
 
 def apply_claude_identity(session: dict[str, Any], path: Path, session_ids: list[str],
@@ -291,6 +443,12 @@ def apply_claude_identity(session: dict[str, Any], path: Path, session_ids: list
         session["id"] = agent_id
         session["parent_session_id"] = parent
         session["agent_path"] = agent_id
+        meta = load_claude_meta(path) if in_subagents_dir else None
+        if meta:
+            session["agent"] = meta
+            if meta.get("parent_agent_id"):
+                session["parent_agent_id"] = meta["parent_agent_id"]
+                session["agent_path"] = f"{meta['parent_agent_id']}/{agent_id}"
         if len(agent_ids) > 1:
             session["warnings"].append(f"Multiple agentId values in one transcript: {agent_ids}")
     else:
@@ -334,13 +492,7 @@ def parse_generic_markdown(path: Path) -> dict[str, Any]:
         role = (match.group(1) or match.group(2) or "").lower()
         role = "assistant" if role == "asst" else role
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        value = redact(text[match.end():end])
-        if value:
-            session["messages"].append({
-                "seq": len(session["messages"]) + 1, "timestamp": None,
-                "role": role, "phase": None, "text": value,
-                "source_ref": f"{path}:char-{match.start()}",
-            })
+        add_message(session, role, text[match.end():end], None, f"{path}:char-{match.start()}")
     if not session["messages"]:
         session["warnings"].append("No explicit user/assistant Markdown role markers found")
     return session
@@ -360,15 +512,21 @@ def parse_generic(path: Path) -> list[dict[str, Any]]:
     session = empty_session("generic", path)
     for line_no, row in rows:
         message = row.get("message") if isinstance(row.get("message"), dict) else row
-        role = message.get("role")
-        text = redact(content_text(message.get("content") or message.get("text")))
-        if role in ("user", "assistant") and text:
-            session["messages"].append({
-                "seq": len(session["messages"]) + 1,
-                "timestamp": row.get("timestamp") or row.get("created_at"),
-                "role": role, "phase": None, "text": text,
-                "source_ref": source_ref(path, line_no),
-            })
+        choices = row.get("choices")
+        if isinstance(choices, list) and choices and isinstance(choices[0], dict) and isinstance(choices[0].get("message"), dict):
+            message = choices[0]["message"]
+        role = message.get("role") or row.get("role")
+        timestamp = row.get("timestamp") or row.get("created_at")
+        ref = source_ref(path, line_no)
+        if role in ("user", "assistant"):
+            add_message(session, role, content_text(message.get("content") or message.get("text")), timestamp, ref)
+        elif role:
+            count_row_type(session, str(role))
+        content = message.get("content")
+        for block in content if isinstance(content, list) else []:
+            if isinstance(block, dict) and block.get("type") in ("tool_use", "function_call"):
+                args = block.get("input") if isinstance(block.get("input"), dict) else {}
+                handle_tool_block(session, str(block.get("name") or ""), args, block.get("id"), timestamp, ref)
         calls = message.get("tool_calls") or row.get("tool_calls") or []
         for call in calls if isinstance(calls, list) else []:
             if not isinstance(call, dict):
@@ -376,13 +534,8 @@ def parse_generic(path: Path) -> list[dict[str, Any]]:
             function = call.get("function") if isinstance(call.get("function"), dict) else call
             name = str(function.get("name") or "")
             args, encrypted = safe_arguments(function.get("arguments") or function.get("input"))
-            session["calls"].append({
-                "seq": len(session["calls"]) + 1, "timestamp": row.get("timestamp"),
-                "name": name, "target": args.get("target"),
-                "task_name": args.get("task_name"), "call_id": call.get("id"),
-                "status": "unavailable_encrypted" if encrypted else "called",
-                "source_ref": source_ref(path, line_no),
-            })
+            add_sop_calls(session, name, args, timestamp, ref)
+            add_agent_call(session, name, args, call.get("id"), timestamp, ref, encrypted)
     if not rows:
         session["warnings"].append("No parseable JSON/JSONL records found")
     return [session]
@@ -525,15 +678,99 @@ def discover(provider: str, workspace: str, session_id: str | None) -> tuple[lis
         if matched_slugs:
             warnings.append(
                 f"cursor workspace matched by project directory slug {matched_slugs} "
-                "(agent transcripts carry no cwd, timestamps or tool results)"
+                "(agent transcripts carry no cwd, tool results or usage; timestamps only when the "
+                "user row embeds <timestamp>)"
             )
         else:
-            warnings.append("Cursor coverage includes agent transcripts only; IDE sidebar private storage is not parsed")
+            seen = sorted({str(s.get("project_slug")) for s in parsed if s.get("project_slug")})
+            hint = f"; project slugs seen (first 3 of {len(seen)}): {seen[:3]}" if seen else "; no agent transcripts found at all"
+            warnings.append(
+                "Cursor coverage includes agent transcripts only; IDE sidebar private storage is not parsed"
+                + (f"; no project slug matched {key!r}{hint}" if key else "")
+            )
     selected, diagnostics = choose_family(parsed, workspace, session_id, provider)
     warnings.extend(diagnostics)
     if not selected:
         warnings.append(f"No {provider} sessions matched workspace {workspace}")
     return selected, warnings
+
+
+# ------------------------------------------------------------------ explicit inputs
+
+
+def detect_provider(path: Path) -> str:
+    """Guess the transcript dialect of an explicit input from its path, then its first rows."""
+    if CURSOR_TRANSCRIPT_DIR in path.parts:
+        return "cursor"
+    if path.parent.name == "subagents" and path.stem.startswith("agent-"):
+        return "claude"
+    if path.suffix.lower() == ".jsonl":
+        for _, row in itertools.islice(json_lines(path), 30):
+            if row.get("type") == "session_meta":
+                return "codex"
+            if row.get("sessionId") and ("cwd" in row or "isSidechain" in row):
+                return "claude"
+    return "generic"
+
+
+def sibling_transcripts(path: Path, provider: str) -> list[Path]:
+    """Child transcripts that belong to an explicitly given root transcript."""
+    if provider == "cursor" and path.parent.name == path.stem:
+        return sorted(p for p in path.parent.rglob("*.jsonl") if p.is_file() and p != path)
+    if provider == "claude" and path.parent.name != "subagents":
+        return sorted(p for p in (path.parent / path.stem / "subagents").glob("*.jsonl") if p.is_file())
+    return []
+
+
+def parse_input(path: Path, provider: str) -> list[dict[str, Any]]:
+    if provider == "codex":
+        return [parse_codex(path)]
+    if provider in ("claude", "cursor"):
+        return [parse_claude_like(path, provider)]
+    return parse_generic(path)
+
+
+def load_inputs(raw_inputs: list[str], provider: str, workspace: str) -> tuple[list[dict[str, Any]], list[str]]:
+    """Explicit inputs are trusted as-is: no workspace filtering, but the dialect is honored."""
+    sessions: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    queue: list[Path] = []
+    for raw in raw_inputs:
+        path = Path(raw).expanduser().resolve()
+        if not path.exists():
+            warnings.append(f"Explicit input not found: {path}")
+            continue
+        queue.extend(generic_files(path) if path.is_dir() else [path])
+    seen: set[str] = set()
+    index = 0
+    while index < len(queue):
+        path = queue[index]
+        index += 1
+        if str(path) in seen:
+            continue
+        seen.add(str(path))
+        dialect = provider if provider not in ("auto", "generic") else detect_provider(path)
+        if provider == "generic":
+            dialect = "generic"
+        for sibling in sibling_transcripts(path, dialect):
+            if str(sibling) not in seen:
+                queue.append(sibling)
+        for session in parse_input(path, dialect):
+            session["explicit_input"] = True
+            if dialect == "cursor" and not session.get("workspace"):
+                session["workspace"] = workspace
+            elif session.get("workspace") and not same_workspace(session["workspace"], workspace):
+                warnings.append(
+                    f"explicit input {path} records workspace {session['workspace']}, not {workspace}; kept because it was passed explicitly"
+                )
+            sessions.append(session)
+    if sessions:
+        dialects = sorted({s["provider"] for s in sessions})
+        warnings.append(f"{len(sessions)} explicit input transcript(s) parsed as {dialects}; not filtered by workspace")
+    return sessions, warnings
+
+
+# ------------------------------------------------------------------ ExpertAgent
 
 
 def expert_events(workspace: Path, task_ids: Iterable[str] = ()) -> list[dict[str, Any]]:
@@ -555,6 +792,8 @@ def expert_events(workspace: Path, task_ids: Iterable[str] = ()) -> list[dict[st
         # retier / extend / wait / depends / finish / advance / sign
         "stageFrom", "stageTo", "rounds", "reason", "timeout", "elapsed",
         "who", "what", "due", "status", "ok", "reasons", "assumptions", "comment", "ref", "seen",
+        # init / dispatch bookkeeping
+        "mode", "tier", "modeBy", "tierBy", "ack", "flow", "purpose", "nested", "resume", "coldStart",
     )
     for path in root.glob("*/events.jsonl"):
         task_id = path.parent.name
@@ -583,37 +822,137 @@ def expert_task_summary(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return sorted(tasks.values(), key=lambda value: value["task_id"])
 
 
+def inferred_task_ids(sessions: list[dict[str, Any]]) -> list[str]:
+    found: list[str] = []
+    for session in sessions:
+        for call in session.get("sop_calls", []):
+            if call.get("task") and call["task"] not in found:
+                found.append(call["task"])
+    return found
+
+
+# ------------------------------------------------------------------ naming
+
+
+def safe_name(value: str, limit: int = 40) -> str:
+    value = re.sub(r"[\\/:*?\"<>|\s\u3000]+", "-", value.strip())
+    value = re.sub(r"-{2,}", "-", value).strip("-.")
+    return value[:limit].rstrip("-") or "untitled"
+
+
+def parse_timestamp(value: Any) -> dt.datetime | None:
+    if not isinstance(value, str) or not value.strip():
+        return None
+    text = value.strip().replace("Z", "+00:00")
+    try:
+        parsed = dt.datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        return parsed
+    return parsed.astimezone()
+
+
+def root_sessions(sessions: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    roots = [s for s in sessions if is_root(s)]
+    return sorted(roots, key=lambda value: value.get("mtime", 0), reverse=True) or sessions[:1]
+
+
+def derive_topic(sessions: list[dict[str, Any]], task_ids: list[str], explicit: str | None) -> tuple[str, str]:
+    """Return (topic, basis). Basis names where the topic came from so the report can say so."""
+    if explicit:
+        return safe_name(explicit), "user"
+    if task_ids:
+        return safe_name("-".join(task_ids)), "expert_task"
+    for root in root_sessions(sessions):
+        for message in root["messages"]:
+            if message["role"] != "user" or message["origin"] == "system":
+                continue
+            text = re.sub(r"^/[\w.:-]+\s*", "", message["text"]).strip()
+            text = re.sub(r"\s+", " ", text)
+            if text:
+                return safe_name(text, 24), "first_user_message"
+    return "untitled", "none"
+
+
+def session_time(sessions: list[dict[str, Any]]) -> tuple[str, str]:
+    """Local ``YYYYMMDD-HHMM`` of the audited root session: first message time, else transcript mtime."""
+    for root in root_sessions(sessions):
+        for candidate in [root.get("started_at")] + [m.get("timestamp") for m in root["messages"]]:
+            parsed = parse_timestamp(candidate)
+            if parsed:
+                return parsed.astimezone().strftime("%Y%m%d-%H%M"), "first_message"
+        if root.get("mtime"):
+            return dt.datetime.fromtimestamp(root["mtime"]).strftime("%Y%m%d-%H%M"), "transcript_mtime"
+    return dt.datetime.now().strftime("%Y%m%d-%H%M"), "now"
+
+
 def strip_internal(bundle: dict[str, Any]) -> dict[str, Any]:
     for session in bundle["sessions"]:
         session.pop("mtime", None)
     return bundle
 
 
+# ------------------------------------------------------------------ rendering
+
+
 def markdown(bundle: dict[str, Any]) -> str:
-    lines = ["# 会话日志事实", "", "## 范围与数据源", ""]
+    naming = bundle["naming"]
+    lines = [f"# 会话日志事实：{naming['topic']}（{naming['session_time']}）", "", "## 范围与数据源", ""]
     lines.append(f"- 工作区：`{bundle['workspace']}`")
     lines.append(f"- Provider：{', '.join(bundle['providers']) or '无'}")
     lines.append(f"- 会话数：{len(bundle['sessions'])}")
+    lines.append(f"- 生成时间：{bundle['generated_at']}")
+    lines.append(f"- 事实包：`{naming['facts_path']}`")
     lines.append(f"- ExpertAgent 事件数：{len(bundle['expert_events'])}")
     if bundle.get("expert_tasks"):
         tasks = ", ".join(f"{t['task_id']}({t['events']})" for t in bundle["expert_tasks"])
         lines.append(f"- ExpertAgent 任务：{tasks}")
     for warning in bundle["warnings"]:
         lines.append(f"- 限制：{warning}")
+    lines.extend(["", "## 会话概览", ""])
+    if bundle["sessions"]:
+        lines.append("| 会话 | 角色 | 人工输入 | 可见消息 | Agent 调用 | sop.mjs | 来源 |")
+        lines.append("|---|---|---:|---:|---:|---:|---|")
+        for session in bundle["sessions"]:
+            agent = session.get("agent") or {}
+            role = "主会话" if is_root(session) else f"子代理 {agent.get('type') or ''} {agent.get('name') or ''}".strip()
+            human = sum(1 for m in session["messages"] if m["role"] == "user" and m["origin"] != "system")
+            lines.append(
+                f"| {session.get('agent_path') or session['id']} | {role} | {human} | {len(session['messages'])} | "
+                f"{len(session['calls'])} | {len(session['sop_calls'])} | `{session['source_path']}` |"
+            )
     lines.extend(["", "## Agent 调用关系", "", "```text"])
     if bundle["sessions"]:
         for session in bundle["sessions"]:
-            parent = session.get("parent_session_id") or "root"
+            parent = session.get("parent_agent_id") or session.get("parent_session_id") or "root"
             label = session.get("agent_path") or session["id"]
+            agent = session.get("agent") or {}
+            desc = f" {agent.get('type')}:{agent.get('name')}" if agent.get("type") else ""
             slug = f" project={session['project_slug']}" if session.get("project_slug") else ""
-            lines.append(f"{parent} -> {label} [{session['provider']}{slug}]")
+            lines.append(f"{parent} -> {label} [{session['provider']}{slug}]{desc}")
+            for call in session["calls"]:
+                detail = call.get("task_name") or call.get("target") or call.get("status")
+                extra = " ".join(f"{k}={v}" for k, v in (call.get("extra") or {}).items() if k not in ("subagent_type", "agent_type"))
+                lines.append(f"    C{call['seq']} {call['name']} -> {call.get('target') or '-'} | {detail}{(' | ' + extra) if extra else ''}")
     else:
         lines.append("未发现匹配会话")
-    lines.extend(["```", "", "## 可见消息", ""])
+    lines.extend(["```", "", "## 用户实际输入", ""])
+    human_turns = [
+        (session, message) for session in bundle["sessions"] if is_root(session)
+        for message in session["messages"] if message["role"] == "user" and message["origin"] != "system"
+    ]
+    if human_turns:
+        for index, (session, message) in enumerate(human_turns, 1):
+            first_line = message["text"].splitlines()[0][:120] if message["text"] else ""
+            lines.append(f"{index}. [{message.get('timestamp') or '-'}] M{message['seq']} {first_line}（`{message['source_ref']}`）")
+    else:
+        lines.append("未发现人工输入（所有 user 行都是宿主注入或为空）。")
+    lines.extend(["", "## 可见消息", ""])
     for session in bundle["sessions"]:
         lines.extend([f"### {session.get('agent_path') or session['id']}", ""])
         for message in session["messages"]:
-            heading = "用户调用" if message["role"] == "user" else "模型输出"
+            heading = {"human": "用户调用", "command": "用户命令", "system": "宿主注入"}.get(message["origin"], "模型输出")
             lines.append(f"#### {heading} M{message['seq']}")
             lines.append("")
             lines.append(message["text"])
@@ -627,6 +966,14 @@ def markdown(bundle: dict[str, Any]) -> str:
                 detail = call.get("task_name") or call.get("target") or call.get("status")
                 lines.append(f"- C{call['seq']} `{call['name']}` → {detail}（`{call['source_ref']}`）")
             lines.append("")
+        if session["sop_calls"]:
+            lines.append("#### sop.mjs 调用")
+            lines.append("")
+            lines.append("| 序号 | 时间 | 命令 | 任务 | 参数 | 来源 |")
+            lines.append("|---|---|---|---|---|---|")
+            for call in session["sop_calls"]:
+                lines.append(f"| S{call['seq']} | {call.get('timestamp') or '-'} | {call['cmd']} | {call.get('task') or '-'} | `{call['argv']}` | `{call['source_ref']}` |")
+            lines.append("")
     lines.extend(["## ExpertAgent 事件", ""])
     if bundle["expert_events"]:
         lines.append("| 时间 | 任务 | 命令 | 事件/专家 | 结果 | 来源 |")
@@ -639,6 +986,10 @@ def markdown(bundle: dict[str, Any]) -> str:
         lines.append("未发现 ExpertAgent 事件。")
     lines.extend(["", "## 事实缺口", ""])
     warnings = bundle["warnings"] + [w for s in bundle["sessions"] for w in s["warnings"]]
+    for session in bundle["sessions"]:
+        if session.get("row_types"):
+            kinds = ", ".join(f"{k}×{v}" for k, v in sorted(session["row_types"].items()))
+            warnings.append(f"{session.get('agent_path') or session['id']} 跳过非消息行：{kinds}")
     if warnings:
         lines.extend(f"- {warning}" for warning in warnings)
     else:
@@ -651,59 +1002,92 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--provider", choices=("auto", "codex", "claude", "cursor", "generic"), default="auto")
     parser.add_argument("--workspace", default=os.getcwd())
-    parser.add_argument("--input", action="append", default=[], help="Explicit transcript file or directory")
+    parser.add_argument("--input", action="append", default=[], help="Explicit transcript file or directory (dialect follows --provider, auto-detected under auto)")
     parser.add_argument("--session-id")
-    parser.add_argument("--task-id", action="append", default=[], help="Only keep ExpertAgent events of these task ids")
+    parser.add_argument("--task-id", action="append", default=[], help="Only keep ExpertAgent events of these task ids (default: tasks inferred from the session's sop.mjs calls)")
+    parser.add_argument("--topic", help="Business topic used in output file names (default: ExpertAgent task id, else the first user message)")
+    parser.add_argument("--output-dir", help="Directory for auto-named outputs (default: <workspace>/session-audit)")
     parser.add_argument("--format", choices=("json", "markdown"), default="json")
-    parser.add_argument("--output", required=True)
+    parser.add_argument("--output", help="Explicit facts file path; overrides --output-dir naming")
     args = parser.parse_args()
 
     workspace = str(Path(args.workspace).expanduser().resolve())
     sessions: list[dict[str, Any]] = []
     warnings: list[str] = []
     providers = ("codex", "claude", "cursor") if args.provider == "auto" else (args.provider,)
-    for provider in providers:
+    if args.input:
+        warnings.append("explicit --input given; provider store discovery skipped (pass no --input to auto-discover)")
+    for provider in () if args.input else providers:
         if provider == "generic":
             continue
         found, provider_warnings = discover(provider, workspace, args.session_id)
         sessions.extend(found)
         warnings.extend(provider_warnings)
 
-    for raw in args.input:
-        path = Path(raw).expanduser().resolve()
-        files = generic_files(path) if path.is_dir() else [path]
-        for item in files:
-            if not item.exists():
-                warnings.append(f"Explicit input not found: {item}")
-                continue
-            sessions.extend(parse_generic(item))
+    explicit, input_warnings = load_inputs(args.input, args.provider, workspace)
+    known = {s["source_path"] for s in sessions}
+    sessions.extend(s for s in explicit if s["source_path"] not in known)
+    warnings.extend(input_warnings)
     if args.provider == "generic" and not args.input:
         warnings.append("generic provider requires at least one --input")
 
+    task_ids = list(args.task_id)
+    inferred = inferred_task_ids(sessions)
+    if not task_ids and inferred:
+        task_ids = inferred
+        warnings.append(f"ExpertAgent events narrowed to task(s) inferred from the session's sop.mjs calls: {inferred}")
+    events = expert_events(Path(workspace), task_ids)
+    tasks = expert_task_summary(events)
+    if not task_ids and len(tasks) > 1:
+        warnings.append(
+            f"ExpertAgent events are workspace-wide and {len(tasks)} tasks share this workspace; "
+            "pass --task-id to keep only the audited session's task"
+        )
+
+    topic, topic_basis = derive_topic(sessions, task_ids, args.topic)
+    stamp, stamp_basis = session_time(sessions)
+    provider_label = "-".join(sorted({s["provider"] for s in sessions})) or args.provider
+    base = f"{topic}-{provider_label}-{stamp}"
+    output_dir = Path(args.output_dir).expanduser().resolve() if args.output_dir else Path(workspace) / "session-audit"
+    if args.output:
+        facts_path = Path(args.output).expanduser().resolve()
+        output_dir = facts_path.parent
+    else:
+        facts_path = output_dir / f"会话日志事实-{base}.{'md' if args.format == 'markdown' else 'json'}"
+    report_path = output_dir / f"会话日志审查-{base}.md"
+
     invocation = " ".join(shlex.quote(value) for value in sys.argv)
-    events = expert_events(Path(workspace), args.task_id)
     bundle = strip_internal({
         "schema_version": SCHEMA_VERSION,
-        "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        "generated_at": dt.datetime.now().astimezone().isoformat(timespec="seconds"),
         "workspace": workspace,
         "providers": sorted({s["provider"] for s in sessions}),
+        "naming": {
+            "topic": topic, "topic_basis": topic_basis,
+            "session_time": stamp, "session_time_basis": stamp_basis,
+            "facts_path": str(facts_path), "report_path": str(report_path),
+        },
+        "task_ids": task_ids,
         "sessions": sessions,
         "expert_events": events,
-        "expert_tasks": expert_task_summary(events),
+        "expert_tasks": tasks,
         "warnings": warnings,
         "invocation": invocation,
     })
-    output = Path(args.output).expanduser().resolve()
-    output.parent.mkdir(parents=True, exist_ok=True)
+    facts_path.parent.mkdir(parents=True, exist_ok=True)
     if args.format == "markdown":
-        output.write_text(markdown(bundle), encoding="utf-8")
+        facts_path.write_text(markdown(bundle), encoding="utf-8")
     else:
-        output.write_text(json.dumps(bundle, ensure_ascii=False, indent=2), encoding="utf-8")
+        facts_path.write_text(json.dumps(bundle, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps({
-        "output": str(output), "sessions": len(sessions),
+        "output": str(facts_path), "report_path": str(report_path),
+        "topic": topic, "session_time": stamp,
+        "sessions": len(sessions),
         "messages": sum(len(s["messages"]) for s in sessions),
+        "human_turns": sum(1 for s in sessions if is_root(s) for m in s["messages"] if m["role"] == "user" and m["origin"] != "system"),
         "calls": sum(len(s["calls"]) for s in sessions),
-        "expert_events": len(bundle["expert_events"]), "warnings": warnings,
+        "sop_calls": sum(len(s["sop_calls"]) for s in sessions),
+        "expert_events": len(bundle["expert_events"]), "task_ids": task_ids, "warnings": warnings,
     }, ensure_ascii=False))
     return 0
 

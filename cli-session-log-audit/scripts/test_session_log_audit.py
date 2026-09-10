@@ -254,6 +254,180 @@ class SessionLogAuditTests(unittest.TestCase):
             summary,
         )
 
+    # ------------------------------------------------------------ v1.2 additions
+
+    def test_generic_reads_top_level_role_and_tool_use_blocks(self):
+        rows = [
+            {"role": "user", "message": {"content": [{"type": "text", "text": "<user_query>go</user_query>"}]}},
+            {"role": "assistant", "message": {"content": [
+                {"type": "text", "text": "ok"},
+                {"type": "tool_use", "id": "t1", "name": "Task", "input": {"subagent_type": "ea-planner", "description": "plan it", "prompt": "long prompt"}},
+            ]}},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            sessions = audit.parse_generic(write_jsonl(Path(tmp) / "export.jsonl", rows))
+        self.assertEqual(["go", "ok"], [m["text"] for m in sessions[0]["messages"]])
+        self.assertEqual("ea-planner", sessions[0]["calls"][0]["target"])
+        self.assertEqual("long prompt", sessions[0]["calls"][0]["prompt_preview"])
+
+    def test_explicit_cursor_input_uses_cursor_dialect_and_pulls_subagents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            transcripts = Path(tmp) / "projects" / "e-workspace-gx" / "agent-transcripts"
+            root = write_jsonl(transcripts / "conv" / "conv.jsonl", [
+                user("<timestamp>2026-09-09T15:26:00+08:00</timestamp><user_query>只做机器人打牌</user_query>"),
+                assistant("派策划", {"type": "tool_use", "id": "t1", "name": "Task",
+                                  "input": {"subagent_type": "generalPurpose", "description": "返修规格", "resume": "b294cda9", "prompt": "宿主降级"}}),
+            ])
+            write_jsonl(transcripts / "conv" / "subagents" / "sub-1.jsonl", [assistant("done")])
+            sessions, warnings = audit.load_inputs([str(root)], "cursor", r"E:\workspace\gx")
+        self.assertEqual({"conv", "sub-1"}, {s["id"] for s in sessions})
+        main = next(s for s in sessions if s["id"] == "conv")
+        self.assertEqual("cursor", main["provider"])
+        self.assertEqual(r"E:\workspace\gx", main["workspace"])
+        self.assertEqual("2026-09-09T15:26:00+08:00", main["messages"][0]["timestamp"])
+        self.assertEqual({"resume": "b294cda9", "subagent_type": "generalPurpose"}, main["calls"][0]["extra"])
+        self.assertTrue(any("explicit input" in w for w in warnings), warnings)
+
+    def test_detect_provider_from_path_and_rows(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            codex = write_jsonl(Path(tmp) / "rollout.jsonl", [{"type": "session_meta", "payload": {"id": "x", "cwd": tmp}}])
+            claude = write_jsonl(Path(tmp) / "s.jsonl", [{"sessionId": "s", "cwd": tmp, "message": {"role": "user", "content": "hi"}}])
+            plain = write_jsonl(Path(tmp) / "plain.jsonl", [{"role": "user", "content": "hi"}])
+            cursor = Path(tmp) / "agent-transcripts" / "c.jsonl"
+            self.assertEqual("codex", audit.detect_provider(codex))
+            self.assertEqual("claude", audit.detect_provider(claude))
+            self.assertEqual("generic", audit.detect_provider(plain))
+            self.assertEqual("cursor", audit.detect_provider(cursor))
+
+    def test_user_rows_are_tagged_by_origin(self):
+        rows = [
+            {"type": "user", "sessionId": "r", "cwd": "/repo", "timestamp": "2026-09-07T07:27:57Z",
+             "message": {"role": "user", "content": "<command-message>expertagent</command-message>\n<command-name>/expertagent</command-name>\n<command-args>做 014</command-args>"}},
+            {"type": "user", "sessionId": "r", "cwd": "/repo", "isMeta": True,
+             "message": {"role": "user", "content": "<local-command-caveat>Caveat: DO NOT respond</local-command-caveat>"}},
+            {"type": "user", "sessionId": "r", "cwd": "/repo",
+             "message": {"role": "user", "content": "<task-notification>\n<task-id>a1</task-id>\n<status>completed</status>\n<summary>Agent \"Dev\" finished</summary>\n</task-notification>"}},
+            {"type": "user", "sessionId": "r", "cwd": "/repo",
+             "message": {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "t", "content": "ignored"}]}},
+            {"type": "user", "sessionId": "r", "cwd": "/repo",
+             "message": {"role": "user", "content": "<system-reminder>injected</system-reminder>继续开发啊"}},
+            {"type": "queue-operation", "operation": "enqueue", "sessionId": "r"},
+            {"type": "last-prompt", "lastPrompt": "x", "sessionId": "r"},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            session = audit.parse_claude_like(write_jsonl(Path(tmp) / "p" / "r.jsonl", rows), "claude")
+        self.assertEqual(
+            [("command", "/expertagent 做 014"), ("system", "[local-command-caveat] Caveat: DO NOT respond"),
+             ("system", '[task-notification] Agent "Dev" finished'), ("human", "继续开发啊")],
+            [(m["origin"], m["text"]) for m in session["messages"]],
+        )
+        self.assertEqual({"queue-operation": 1, "last-prompt": 1}, session["row_types"])
+        self.assertEqual("2026-09-07T07:27:57Z", session["started_at"])
+
+    def test_claude_queued_commands_count_as_user_turns(self):
+        rows = [
+            {"type": "attachment", "sessionId": "r", "cwd": "/repo", "attachment": {
+                "type": "queued_command", "prompt": [{"type": "text", "text": "做到什么地步了"}],
+                "origin": {"kind": "human"}, "timestamp": "2026-09-07T11:51:55Z"}},
+            {"type": "attachment", "sessionId": "r", "cwd": "/repo", "attachment": {
+                "type": "queued_command", "prompt": [{"type": "text", "text": "/loop tick"}], "origin": {"kind": "loop"}}},
+            {"type": "attachment", "sessionId": "r", "cwd": "/repo", "attachment": {"type": "other"}},
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            session = audit.parse_claude_like(write_jsonl(Path(tmp) / "p" / "r.jsonl", rows), "claude")
+        self.assertEqual([("human", "做到什么地步了", "queued", "2026-09-07T11:51:55Z"), ("system", "/loop tick", "queued", None)],
+                         [(m["origin"], m["text"], m["phase"], m["timestamp"]) for m in session["messages"]])
+        self.assertEqual({"attachment": 1}, session["row_types"])
+
+    def test_sop_text_inside_agent_prompt_is_not_an_executed_call(self):
+        rows = [assistant("派", {"type": "tool_use", "id": "t", "name": "Agent", "input": {
+            "subagent_type": "ea-planner", "prompt": "登记时跑 node sop.mjs evidence --task x --by planner"}})]
+        with tempfile.TemporaryDirectory() as tmp:
+            session = audit.parse_claude_like(write_jsonl(Path(tmp) / "p" / "r.jsonl", rows), "claude")
+        self.assertEqual([], session["sop_calls"])
+        self.assertEqual(1, len(session["calls"]))
+
+    def test_claude_subagent_meta_json_enriches_agent_and_nesting(self):
+        rows = [{"sessionId": "root-1", "cwd": "/repo", "isSidechain": True, "agentId": "a2",
+                 "message": {"role": "assistant", "content": "nudged"}}]
+        with tempfile.TemporaryDirectory() as tmp:
+            path = write_jsonl(Path(tmp) / "p" / "root-1" / "subagents" / "agent-a2.jsonl", rows)
+            path.with_name("agent-a2.meta.json").write_text(json.dumps({
+                "agentType": "ea-developer", "name": "dev-nudge", "description": "Nudge dev",
+                "toolUseId": "toolu_1", "parentAgentId": "a1", "spawnDepth": 2}), encoding="utf-8")
+            session = audit.parse_claude_like(path, "claude")
+        self.assertEqual("ea-developer", session["agent"]["type"])
+        self.assertEqual("a1", session["parent_agent_id"])
+        self.assertEqual("a1/a2", session["agent_path"])
+        self.assertEqual("root-1", session["parent_session_id"], "family selection still keys on the root session")
+
+    def test_mid_task_transcript_is_flagged_not_silenced(self):
+        rows = [assistant("resuming d12"), user("<user_query>继续</user_query>")]
+        with tempfile.TemporaryDirectory() as tmp:
+            session = audit.parse_claude_like(write_jsonl(Path(tmp) / "agent-transcripts" / "c.jsonl", rows), "cursor")
+        self.assertTrue(any("mid-task" in w for w in session["warnings"]), session["warnings"])
+
+    def test_sop_calls_are_extracted_from_any_tool_input_and_infer_task_ids(self):
+        rows = [
+            assistant("记账", {"type": "tool_use", "id": "t1", "name": "Shell", "input": {
+                "command": "node .expertagent/sop.mjs dispatch --task anbao-bot-play --expert ea-planner --resume d11 --token=abc123456789"}}),
+            assistant("登记", {"type": "tool_use", "id": "t2", "name": "Bash", "input": {
+                "command": "node sop.mjs evidence --task anbao-bot-play --kind test --by 主会话 && node sop.mjs advance --task other-task --to done"}}),
+            assistant("无关", {"type": "tool_use", "id": "t3", "name": "Bash", "input": {"command": "git status"}}),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            session = audit.parse_claude_like(write_jsonl(Path(tmp) / "agent-transcripts" / "c.jsonl", rows), "cursor")
+        self.assertEqual([("dispatch", "anbao-bot-play"), ("evidence", "anbao-bot-play"), ("advance", "other-task")],
+                         [(c["cmd"], c["task"]) for c in session["sop_calls"]])
+        self.assertIn("[REDACTED]", session["sop_calls"][0]["argv"])
+        self.assertEqual([], session["calls"], "sop.mjs calls are not agent calls")
+        self.assertEqual(["anbao-bot-play", "other-task"], audit.inferred_task_ids([session]))
+
+    def test_topic_and_time_naming(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = write_jsonl(Path(tmp) / "agent-transcripts" / "c.jsonl", [
+                user("<user_query>/expertagent 帮我执行飞书总需求，只要子项目「机器人打牌」，其它子项目不执行</user_query>"),
+            ])
+            session = audit.parse_claude_like(root, "cursor")
+            session["mtime"] = 1788000000
+        topic, basis = audit.derive_topic([session], [], None)
+        self.assertEqual("first_user_message", basis)
+        self.assertTrue(topic.startswith("帮我执行飞书总需求") and len(topic) <= 24, topic)
+        self.assertEqual(("anbao-bot-play", "expert_task"), audit.derive_topic([session], ["anbao-bot-play"], None))
+        self.assertEqual(("机器人-打牌", "user"), audit.derive_topic([session], [], "机器人 打牌"))
+        stamp, basis = audit.session_time([session])
+        self.assertEqual("transcript_mtime", basis)
+        self.assertRegex(stamp, r"^\d{8}-\d{4}$")
+        session["messages"][0]["timestamp"] = "2026-09-09T07:26:00Z"
+        self.assertEqual("first_message", audit.session_time([session])[1])
+        self.assertEqual("untitled", audit.safe_name("  /:*? "))
+
+    def test_main_writes_auto_named_outputs(self):
+        import io
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = Path(tmp) / "ws"
+            workspace.mkdir()
+            transcript = write_jsonl(Path(tmp) / "agent-transcripts" / "conv.jsonl", [
+                user("<user_query>做机器人打牌</user_query>"),
+                assistant("好", {"type": "tool_use", "id": "t", "name": "Shell", "input": {"command": "node sop.mjs init --task bot-play"}}),
+            ])
+            write_jsonl(workspace / ".expertagent" / "tasks" / "bot-play" / "events.jsonl", [{"at": "1", "cmd": "init"}])
+            write_jsonl(workspace / ".expertagent" / "tasks" / "unrelated" / "events.jsonl", [{"at": "1", "cmd": "init"}])
+            argv = ["prog", "--provider", "cursor", "--workspace", str(workspace), "--input", str(transcript)]
+            with mock.patch.object(sys, "argv", argv), \
+                    mock.patch.object(audit, "cursor_root", return_value=Path(tmp) / "missing"), \
+                    mock.patch("sys.stdout", new_callable=io.StringIO) as out:
+                audit.main()
+            summary = json.loads(out.getvalue())
+            facts = Path(summary["output"])
+            self.assertEqual((workspace / "session-audit").resolve(), facts.parent.resolve())
+            self.assertRegex(facts.name, r"^会话日志事实-bot-play-cursor-\d{8}-\d{4}\.json$")
+            self.assertRegex(Path(summary["report_path"]).name, r"^会话日志审查-bot-play-cursor-\d{8}-\d{4}\.md$")
+            bundle = json.loads(facts.read_text(encoding="utf-8"))
+            self.assertEqual(["bot-play"], bundle["task_ids"])
+            self.assertEqual(["bot-play"], [e["task_id"] for e in bundle["expert_events"]])
+            self.assertEqual(1, summary["human_turns"])
+
 
 if __name__ == "__main__":
     unittest.main()
