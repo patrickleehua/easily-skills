@@ -40,3 +40,7 @@
 ## 复盘要点
 
 标准 GRAI 四步（见 `references/report-types.md` 复盘节），行动项按 SMART。
+
+## HTML 组件映射
+
+结论 → `summary`；重点 → `highlights`；数字 → `kpis`；进展 → `items` / `table`；风险 → `risks`；计划 → `actions`。确定行业后按对应行业文件的映射补充图表。

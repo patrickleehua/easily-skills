@@ -16,3 +16,8 @@
 .theme-editorial h2{font-family:var(--serif);font-size:19px}
 @media(max-width:720px){.theme-editorial .report{padding:28px 24px 20px}.theme-editorial h1{font-size:30px}.theme-editorial .section{display:block}.theme-editorial .section-head{padding-top:0}.theme-editorial .metric{margin-right:0;padding:16px}}
 @media print{.theme-editorial .section{display:block}.theme-editorial .section-head{padding:0 0 8px}}
+.theme-editorial{--mark:#f1e9c4;--code:#f4f2e9;--chart-1:#657351;--chart-2:#8d9c74;--chart-3:#a9a06a;--chart-4:#b0824f;--chart-5:#7f8a8c;--chart-6:#56604a;--chart-track:#e6e5d8;--tone-accent:#5c6a4b;--tint-accent:#f1f2e9;--tone-info:#6b7d80;--tint-info:#eef1f0}
+.theme-editorial .chart,.theme-editorial .highlight{border-color:var(--line)}
+.theme-editorial .chart-title,.theme-editorial .md-h{font-family:var(--serif);font-weight:500}
+.theme-editorial .md-table thead th{background:transparent;border-bottom:2px solid var(--line)}
+.theme-editorial .section{row-gap:0}.theme-editorial .section>.section-head{grid-column:1;grid-row:1 / span 40;align-self:start}.theme-editorial .section>:not(.section-head){grid-column:2}.theme-editorial .section>.section-summary,.theme-editorial .section>.section-lead,.theme-editorial .section>.block:first-of-type{margin-top:16px}

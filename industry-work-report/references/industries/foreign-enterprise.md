@@ -49,3 +49,7 @@ Post-mortem / Retrospective 风格：What happened（时间线）→ Root cause�
 
 ✅ completed 80%、on track、escalated to X、decision needed by Friday
 ❌ 我觉得可能、应该差不多了、有点问题（模糊量词一律换具体数字或明确状态）
+
+## HTML 组件映射
+
+TL;DR → `summary`；Status (RAG) → `rag`（criteria 必填）；Highlights / Lowlights → `highlights`（tone good / risk）；Key metrics → `kpis`；Timeline → `gantt`；Risks & Issues → `risks`；Action Items → `actions`（owner + due）；Decisions needed → `decisions`（status: pending）。

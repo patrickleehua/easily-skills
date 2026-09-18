@@ -51,3 +51,7 @@
 
 ✅ 推进 XX 项目至商务谈判，预计 9 月底前签单（¥50 万），风险为竞品低价 15%，建议授权 95 折
 ❌ 客户聊得不错、在跟进了、应该快成了
+
+## HTML 组件映射
+
+业绩达成 → `scorecard` / `gauge`；销售漏斗 → `funnel`；业绩变化拆解 → `waterfall`；渠道 / 区域构成 → `donut` / `stacked`；客户阶段 → `kanban` 或 `table`（`status` 列）；趋势与环比 → `line` / 分组 `column`；客户或机会定位 → `quadrant`。

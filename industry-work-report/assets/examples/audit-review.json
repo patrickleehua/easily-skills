@@ -1,0 +1,87 @@
+{
+  "title": "订单系统 v3 上线前质量审查报告",
+  "subtitle": "质量保障组 · 审查周期 2026-09-10 至 09-17",
+  "date": "2026.09.17",
+  "report_type": "AUDIT REVIEW / 审查报告",
+  "genre": "审查报告",
+  "industry": "互联网研发",
+  "audience": "上线评审会",
+  "demo": true,
+  "numbering": "cn",
+  "summary": "订单系统 v3 **暂不满足上线条件**：38 项检查中 29 项通过，==2 项阻断==（库存扣减并发缺陷、回滚脚本未验证），7 项待确认。两项阻断关闭并复验后可重新申请评审。",
+  "highlights": [
+    {"label": "结论", "tone": "risk", "text": "暂不上线：2 项阻断未关闭。"},
+    {"label": "已达标", "tone": "good", "text": "功能与接口契约 29 项检查通过，覆盖主链路。"},
+    {"label": "重新评审条件", "tone": "accent", "text": "阻断项修复 + 独立复验 + 回滚演练记录。"}
+  ],
+  "metrics": [
+    {"label": "检查项", "value": "38", "unit": "项", "source": "虚构示例 · 审查清单 v2"},
+    {"label": "通过", "value": "29", "unit": "项", "tone": "good", "source": "虚构示例 · 审查清单 v2"},
+    {"label": "阻断", "value": "2", "unit": "项", "tone": "risk", "source": "虚构示例 · 审查清单 v2"},
+    {"label": "待确认", "value": "7", "unit": "项", "tone": "warn", "note": "缺证据，不计入通过", "source": "虚构示例 · 审查清单 v2"}
+  ],
+  "sections": [
+    {
+      "title": "审查结论与决策",
+      "lead": "本报告把“已核查事实”“基于事实的判断”“建议决策”分开写。测试通过、代码已合入、评审写 pass 分别只证明对应层面的结果，不自动等于可上线。",
+      "blocks": [
+        {"type": "decisions", "items": [
+          {"decision": "v3 暂不上线", "status": "proposed", "reason": "2 项阻断影响资金正确性与故障恢复", "condition": "阻断项关闭并独立复验后重新提交评审", "owner": "上线评审会"},
+          {"decision": "7 项待确认不计入通过", "status": "approved", "reason": "缺少运行证据，只有口头说明", "date": "2026-09-17"}
+        ]}
+      ]
+    },
+    {
+      "title": "审查范围与证据口径",
+      "lead": "审查覆盖代码、测试、发布三个层面。每条结论都能回查到下表中的证据来源。",
+      "blocks": [
+        {"type": "evidence", "items": [
+          {"source": "仓库 order-service@a1b2c3d", "proves": "改动范围与代码实现", "boundary": "不证明运行时行为", "kind": "observed"},
+          {"source": "自动化测试报告 #1287", "proves": "412 条用例通过，覆盖率 78%", "boundary": "不含并发与压力场景", "kind": "observed"},
+          {"source": "压测报告 9/15", "proves": "库存扣减在 500 并发下出现超卖", "kind": "observed"},
+          {"source": "发布手册 v3", "proves": "回滚步骤已编写", "boundary": "未演练，不证明可回滚", "kind": "inferred"}
+        ]}
+      ]
+    },
+    {
+      "title": "审查发现",
+      "lead": "按严重程度分级：阻断项必须在上线前关闭，一般项可带条件上线，建议项纳入后续迭代。",
+      "blocks": [
+        {"type": "columns", "ratio": "2:1", "columns": [
+          [{"type": "table", "columns": [{"key": "id", "label": "编号"}, {"key": "finding", "label": "发现"}, {"key": "level", "label": "等级", "kind": "level"}, {"key": "status", "label": "状态", "kind": "status"}], "rows": [
+            {"id": "F-01", "finding": "库存扣减并发下超卖（500 并发复现 3 次）", "level": "high", "status": "open", "_tone": "risk"},
+            {"id": "F-02", "finding": "回滚脚本未在预发演练", "level": "high", "status": "open", "_tone": "risk"},
+            {"id": "F-03", "finding": "慢查询 2 条（>800ms）", "level": "medium", "status": "active"},
+            {"id": "F-04", "finding": "告警阈值未按新流量调整", "level": "medium", "status": "active"},
+            {"id": "F-05", "finding": "日志字段命名不统一", "level": "low", "status": "planned"}
+          ]}],
+          [{"type": "donut", "title": "检查结果构成", "unit": "项", "source": "虚构示例 · 审查清单 v2", "data": [{"label": "通过", "value": 29, "color": "good"}, {"label": "待确认", "value": 7, "color": "warn"}, {"label": "阻断", "value": 2, "color": "risk"}]}]
+        ]}
+      ]
+    },
+    {
+      "title": "上线检查清单",
+      "blocks": [
+        {"type": "checklist", "items": [
+          {"text": "主链路功能回归", "state": "done"},
+          {"text": "接口契约兼容（旧客户端）", "state": "done"},
+          {"text": "并发与库存一致性", "state": "blocked", "note": "见 F-01"},
+          {"text": "回滚演练", "state": "blocked", "note": "见 F-02"},
+          {"text": "监控与告警", "state": "open", "note": "见 F-04"},
+          {"text": "数据迁移", "state": "na", "note": "本次无表结构变更"}
+        ]}
+      ]
+    },
+    {
+      "title": "整改与复验要求",
+      "blocks": [
+        {"type": "actions", "items": [
+          {"priority": "P0", "task": "修复库存扣减并发缺陷", "owner": "订单组", "due": "9/20", "acceptance": "1000 并发压测 3 轮零超卖，独立复验"},
+          {"priority": "P0", "task": "预发环境回滚演练", "owner": "发布组", "due": "9/21", "acceptance": "15 分钟内回滚完成，留存演练记录"},
+          {"priority": "P1", "task": "补 7 项待确认证据", "owner": "各模块负责人", "due": "9/21", "acceptance": "每项附运行截图或日志"}
+        ]}
+      ]
+    }
+  ],
+  "footer": "审查报告示例 · 所有内容与数字均为虚构"
+}

@@ -1,0 +1,78 @@
+{
+  "title": "二车间 9 月生产月报",
+  "subtitle": "二车间 · 汇报人：示例",
+  "date": "2026 年 9 月",
+  "report_type": "MONTHLY REPORT / 月报",
+  "genre": "月报",
+  "industry": "制造 / 供应链",
+  "audience": "生产副总",
+  "demo": true,
+  "numbering": "cn",
+  "brand": {"accent": "#1F5F8B"},
+  "summary": "9 月产量 12.6 万件，达成率 105%；**良率 96.2%，未达 97% 目标**，主因为 X 工序夹具磨损与来料含水率偏高，已完成临时对策，9/26 起连续 3 批恢复至 97.1%。全月无安全事故。",
+  "highlights": [
+    {"label": "达成", "tone": "good", "text": "产量、交付准时率均超目标。"},
+    {"label": "未达", "tone": "risk", "text": "良率 96.2%，缺口 0.8 个百分点。"},
+    {"label": "需要决策", "tone": "accent", "text": "夹具更换预算 8.5 万元，请 10/10 前审批。"}
+  ],
+  "sections": [
+    {
+      "title": "核心指标",
+      "lead": "五项核心指标中三项达成、一项接近、一项未达。未达项是良率，原因和对策见第三章。",
+      "blocks": [
+        {"type": "scorecard", "source": "虚构示例 · MES 月报", "items": [
+          {"label": "产量", "target": 12, "actual": 12.6, "unit": "万件"},
+          {"label": "良率", "target": 97, "actual": 96.2, "unit": "%"},
+          {"label": "交付准时率", "target": 95, "actual": 97.3, "unit": "%"},
+          {"label": "设备综合效率 OEE", "target": 82, "actual": 80.1, "unit": "%"},
+          {"label": "单件能耗", "target": 1.8, "actual": 1.72, "unit": "kWh", "lower_is_better": true}
+        ]},
+        {"type": "column", "title": "周产量：计划 vs 实际", "unit": "千件", "source": "虚构示例 · MES", "x": ["W36", "W37", "W38", "W39"], "series": [{"name": "计划", "points": [30, 30, 30, 30], "color": "muted"}, {"name": "实际", "points": [29.4, 31.8, 32.1, 32.7]}]}
+      ]
+    },
+    {
+      "title": "质量分析",
+      "lead": "不良集中在 X 工序第 37–38 周，占全月不良的 61%。热力表按工序 × 周统计不良件数。",
+      "blocks": [
+        {"type": "heatmap", "title": "各工序每周不良件数", "unit": "件", "tone": "risk", "source": "虚构示例 · 质检记录", "x": ["W36", "W37", "W38", "W39"], "y": ["冲压", "X 工序", "焊接", "装配", "包装"], "values": [[42, 38, 40, 35], [120, 410, 385, 96], [55, 60, 48, 51], [30, 33, 29, 31], [8, 6, 9, 5]]},
+        {"type": "fishbone", "title": "X 工序良率下降原因", "effect": "X 工序良率降至 93.8%", "categories": [
+          {"name": "机", "causes": ["夹具磨损超限", "温控漂移 ±3℃"]},
+          {"name": "料", "causes": ["供应商批次更换", "来料含水率偏高"]},
+          {"name": "人", "causes": ["夜班新员工 3 人"]},
+          {"name": "法", "causes": ["作业指导书未更新"]}
+        ]}
+      ]
+    },
+    {
+      "title": "问题与对策（8D）",
+      "blocks": [
+        {"type": "table", "columns": [{"key": "problem", "label": "问题"}, {"key": "cause", "label": "根因"}, {"key": "temp", "label": "临时措施"}, {"key": "perm", "label": "永久对策"}, {"key": "owner", "label": "责任人"}, {"key": "status", "label": "状态", "kind": "status"}], "rows": [
+          {"problem": "X 工序尺寸超差", "cause": "夹具磨损超限", "temp": "每班首件全检", "perm": "更换夹具，点检周期改为每周", "owner": "设备科", "status": "active"},
+          {"problem": "表面气泡", "cause": "来料含水率偏高", "temp": "来料烘干 2 小时", "perm": "供应商来料标准加严", "owner": "采购部", "status": "done"},
+          {"problem": "夜班不良偏高", "cause": "新员工未完成上岗培训", "temp": "老员工带班", "perm": "上岗考核纳入排班前置条件", "owner": "车间主任", "status": "done"}
+        ]}
+      ]
+    },
+    {
+      "title": "安全与环保（EHS）",
+      "blocks": [
+        {"type": "columns", "columns": [
+          [{"type": "kpis", "source": "虚构示例 · EHS 台账", "items": [{"label": "安全事故", "value": "0", "unit": "起", "tone": "good"}, {"label": "隐患整改闭环率", "value": "100", "unit": "%", "note": "发现 14 项，全部闭环"}]}],
+          [{"type": "checklist", "items": [{"text": "月度消防检查", "state": "done"}, {"text": "危化品台账核对", "state": "done"}, {"text": "噪声监测", "state": "open", "note": "10/8 第三方检测"}]}]
+        ]}
+      ]
+    },
+    {
+      "title": "下月计划与需要的资源",
+      "blocks": [
+        {"type": "actions", "items": [
+          {"priority": "P0", "task": "更换 X 工序夹具", "owner": "设备科", "due": "10/15", "acceptance": "连续 5 批良率 ≥ 97%"},
+          {"priority": "P1", "task": "更新 X 工序作业指导书并培训", "owner": "工艺科", "due": "10/10", "acceptance": "全员考核通过"},
+          {"priority": "P1", "task": "10 月排产 13 万件", "owner": "计划科", "due": "10/31", "acceptance": "物料齐套率 ≥ 98%"}
+        ]},
+        {"type": "callout", "tone": "accent", "label": "需要决策", "text": "夹具更换预算 **8.5 万元**，请生产副总 10/10 前审批；未批准则维持每班首件全检，产能损失约 2%。"}
+      ]
+    }
+  ],
+  "footer": "制造月报示例 · 所有内容与数字均为虚构"
+}

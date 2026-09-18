@@ -1,0 +1,1220 @@
+{
+  "title": "报告标准组件库",
+  "subtitle": "全部组件的用法演示 · 复制对应 JSON 即可在任何报告中引用",
+  "report_type": "COMPONENT LIBRARY / 组件库",
+  "genre": "组件目录",
+  "audience": "报告撰写者",
+  "date": "2026.09.18",
+  "demo": true,
+  "numbering": "cn",
+  "summary": "一个组件解决一种表达：结论用 `summary`，重点用 `highlights`，数字用 `kpis` / `scorecard`，数量关系用图表，风险、决策、行动用管理组件，时间用 `timeline` / `gantt`，框架分析用 `comparison` / `quadrant` / `fishbone`。==组件可以任意组合、分栏嵌套。==",
+  "highlights": [
+    {
+      "label": "进展",
+      "tone": "good",
+      "text": "`highlights` 放 2–4 条，首屏第一眼看到的就是它。"
+    },
+    {
+      "label": "阻塞",
+      "tone": "risk",
+      "text": "风险色只给真正阻塞的事，**一义一色**。"
+    },
+    {
+      "label": "下一步",
+      "tone": "accent",
+      "text": "每条一句话，细节进正文。"
+    }
+  ],
+  "metrics": [
+    {
+      "label": "组件总数",
+      "value": "38",
+      "unit": "个",
+      "note": "7 个分组",
+      "source": "虚构示例 · 组件注册表"
+    },
+    {
+      "label": "图表类型",
+      "value": "10",
+      "unit": "种",
+      "delta": "较上一版 +3",
+      "tone": "good",
+      "source": "虚构示例"
+    },
+    {
+      "label": "外部依赖",
+      "value": "0",
+      "unit": "个",
+      "target": "目标：离线可用",
+      "source": "虚构示例"
+    }
+  ],
+  "sections": [
+    {
+      "title": "结论与强调",
+      "lead": "这一组负责“让人先看到重点”。`summary`、`highlights` 通常放首屏，`callout` 和 `markdown` 用在章节正文里。",
+      "blocks": [
+        {
+          "type": "callout",
+          "tone": "risk",
+          "label": "风险",
+          "text": "验收账号未开通，明日 10:00 前不到位将顺延提测。"
+        },
+        {
+          "type": "callout",
+          "tone": "good",
+          "text": "建议先对照单叶闭环，再决定是否扩大试点。"
+        },
+        {
+          "type": "markdown",
+          "text": "正文支持 **粗体**、==高亮==、`代码`、[链接](https://example.com)、表格和列表，也可以直接内嵌组件代码块。\n\n| 写法 | 效果 |\n|---|---|\n| `==重点==` | ==重点== |\n| `**名词**` | **名词** |"
+        },
+        {
+          "type": "columns",
+          "ratio": "1:1",
+          "columns": [
+            [
+              {
+                "type": "glossary",
+                "title": "术语表",
+                "items": [
+                  {
+                    "term": "灰度",
+                    "desc": "先对一小部分用户开放新版本，观察指标后再全量。"
+                  },
+                  {
+                    "term": "SLA",
+                    "desc": "服务等级协议，承诺的可用性或响应时限。"
+                  },
+                  {
+                    "term": "P0",
+                    "desc": "最高优先级，阻塞主流程，必须当天处理。"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "checklist",
+                "title": "上线检查清单",
+                "items": [
+                  {
+                    "text": "回归用例全部通过",
+                    "state": "done"
+                  },
+                  {
+                    "text": "监控告警已配置",
+                    "state": "done",
+                    "note": "错误率 > 1% 告警"
+                  },
+                  {
+                    "text": "回滚预案演练",
+                    "state": "blocked",
+                    "note": "测试环境未就绪"
+                  },
+                  {
+                    "text": "对外公告",
+                    "state": "open"
+                  },
+                  {
+                    "text": "数据迁移",
+                    "state": "na",
+                    "note": "本次无结构变更"
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "指标与数据",
+      "lead": "数字必须带来源和口径。`scorecard` 自动算达成率并按判据着色，`table` 的列可以声明类型。",
+      "blocks": [
+        {
+          "type": "scorecard",
+          "title": "季度目标达成",
+          "source": "虚构示例 · 经营看板",
+          "items": [
+            {
+              "label": "销售额",
+              "target": 1200,
+              "actual": 1260,
+              "unit": "万元"
+            },
+            {
+              "label": "新客户数",
+              "target": 80,
+              "actual": 74,
+              "unit": "家"
+            },
+            {
+              "label": "客诉率",
+              "target": 0.5,
+              "actual": 0.8,
+              "unit": "%",
+              "lower_is_better": true,
+              "note": "越低越好"
+            },
+            {
+              "label": "交付准时率",
+              "target": 95,
+              "actual": 96.5,
+              "unit": "%"
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "title": "模块进度",
+          "source": "虚构示例 · 项目台账",
+          "columns": [
+            {
+              "key": "module",
+              "label": "模块"
+            },
+            {
+              "key": "owner",
+              "label": "负责人"
+            },
+            {
+              "key": "progress",
+              "label": "进度",
+              "kind": "progress"
+            },
+            {
+              "key": "status",
+              "label": "状态",
+              "kind": "status"
+            },
+            {
+              "key": "bugs",
+              "label": "遗留缺陷",
+              "kind": "number"
+            },
+            {
+              "key": "level",
+              "label": "风险",
+              "kind": "level"
+            }
+          ],
+          "rows": [
+            {
+              "module": "支付网关",
+              "owner": "张三",
+              "progress": 100,
+              "status": "done",
+              "bugs": 0,
+              "level": "low"
+            },
+            {
+              "module": "订单中心",
+              "owner": "李四",
+              "progress": 72,
+              "status": "active",
+              "bugs": 3,
+              "level": "medium"
+            },
+            {
+              "module": "对账服务",
+              "owner": "王五",
+              "progress": 35,
+              "status": "blocked",
+              "bugs": 7,
+              "level": "high",
+              "_tone": "risk"
+            }
+          ]
+        },
+        {
+          "type": "evidence",
+          "title": "证据台账",
+          "items": [
+            {
+              "source": "Git 提交记录 9/14–9/17",
+              "proves": "42 个非合并提交，改造已落库",
+              "boundary": "不证明运行质量",
+              "kind": "observed"
+            },
+            {
+              "source": "测试报告",
+              "proves": "327 条模块级测试通过",
+              "boundary": "不覆盖端到端链路",
+              "kind": "observed"
+            },
+            {
+              "source": "会话审计",
+              "proves": "卡顿主要来自异常恢复",
+              "kind": "inferred"
+            },
+            {
+              "source": "—",
+              "proves": "上线后性能表现",
+              "kind": "unknown"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "图表",
+      "lead": "十种图表覆盖对比、趋势、构成、完成度、转化、增减和交叉强度。每张图都必须写 `source`。",
+      "blocks": [
+        {
+          "type": "columns",
+          "columns": [
+            [
+              {
+                "type": "bar",
+                "title": "各端工作包",
+                "unit": "个",
+                "source": "虚构示例",
+                "data": [
+                  {
+                    "label": "服务端",
+                    "value": 9
+                  },
+                  {
+                    "label": "客户端",
+                    "value": 4
+                  },
+                  {
+                    "label": "Web 端",
+                    "value": 0,
+                    "color": "muted"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "column",
+                "title": "计划 vs 实际（分组柱）",
+                "unit": "项",
+                "source": "虚构示例",
+                "x": [
+                  "9月",
+                  "10月",
+                  "11月",
+                  "12月"
+                ],
+                "series": [
+                  {
+                    "name": "计划",
+                    "points": [
+                      12,
+                      14,
+                      15,
+                      16
+                    ],
+                    "color": "muted"
+                  },
+                  {
+                    "name": "实际",
+                    "points": [
+                      11,
+                      15,
+                      13,
+                      17
+                    ]
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "columns",
+          "columns": [
+            [
+              {
+                "type": "line",
+                "title": "通过率走势",
+                "unit": "%",
+                "source": "虚构示例",
+                "x": [
+                  "W1",
+                  "W2",
+                  "W3",
+                  "W4",
+                  "W5"
+                ],
+                "series": [
+                  {
+                    "name": "通过率",
+                    "points": [
+                      62,
+                      71,
+                      78,
+                      84,
+                      88
+                    ]
+                  },
+                  {
+                    "name": "覆盖率",
+                    "points": [
+                      40,
+                      55,
+                      61,
+                      66,
+                      70
+                    ]
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "donut",
+                "title": "工时分布",
+                "unit": "h",
+                "center": "总工时",
+                "source": "虚构示例",
+                "data": [
+                  {
+                    "label": "开发",
+                    "value": 26
+                  },
+                  {
+                    "label": "测试",
+                    "value": 18
+                  },
+                  {
+                    "label": "修复",
+                    "value": 11
+                  },
+                  {
+                    "label": "沟通",
+                    "value": 6
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "columns",
+          "columns": [
+            [
+              {
+                "type": "stacked",
+                "title": "工作包状态",
+                "unit": "个",
+                "source": "虚构示例",
+                "data": [
+                  {
+                    "label": "已完成",
+                    "value": 13,
+                    "color": "good"
+                  },
+                  {
+                    "label": "进行中",
+                    "value": 5,
+                    "color": "accent"
+                  },
+                  {
+                    "label": "阻塞",
+                    "value": 2,
+                    "color": "risk"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "progress",
+                "title": "主线完成度",
+                "source": "虚构示例",
+                "data": [
+                  {
+                    "label": "流程迁移",
+                    "value": 85
+                  },
+                  {
+                    "label": "跨端拆分",
+                    "value": 60,
+                    "color": "warn",
+                    "note": "上游基线未确认"
+                  },
+                  {
+                    "label": "原型验证",
+                    "value": 30,
+                    "color": "muted"
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "columns",
+          "columns": [
+            [
+              {
+                "type": "funnel",
+                "title": "线索转化",
+                "unit": "个",
+                "source": "虚构示例 · CRM",
+                "data": [
+                  {
+                    "label": "线索",
+                    "value": 320
+                  },
+                  {
+                    "label": "有效商机",
+                    "value": 96
+                  },
+                  {
+                    "label": "方案报价",
+                    "value": 41
+                  },
+                  {
+                    "label": "成交",
+                    "value": 12
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "waterfall",
+                "title": "利润变化构成",
+                "unit": "万",
+                "source": "虚构示例 · 财务",
+                "start": {
+                  "label": "上月",
+                  "value": 120
+                },
+                "data": [
+                  {
+                    "label": "新签",
+                    "value": 38
+                  },
+                  {
+                    "label": "续费",
+                    "value": 15
+                  },
+                  {
+                    "label": "退款",
+                    "value": -9
+                  },
+                  {
+                    "label": "成本",
+                    "value": -22
+                  }
+                ],
+                "end_label": "本月"
+              }
+            ]
+          ]
+        },
+        {
+          "type": "gauge",
+          "title": "季度目标完成度",
+          "source": "虚构示例 · OKR",
+          "items": [
+            {
+              "label": "O1 增长",
+              "value": 86
+            },
+            {
+              "label": "O2 质量",
+              "value": 72,
+              "color": "warn"
+            },
+            {
+              "label": "O3 效率",
+              "value": 94,
+              "color": "good"
+            },
+            {
+              "label": "O4 人才",
+              "value": 40,
+              "color": "risk",
+              "note": "招聘滞后"
+            }
+          ]
+        },
+        {
+          "type": "heatmap",
+          "title": "各模块每周缺陷数",
+          "unit": "个",
+          "tone": "risk",
+          "source": "虚构示例 · 缺陷系统",
+          "x": [
+            "W1",
+            "W2",
+            "W3",
+            "W4",
+            "W5",
+            "W6"
+          ],
+          "y": [
+            "支付",
+            "订单",
+            "对账",
+            "账户"
+          ],
+          "values": [
+            [
+              2,
+              1,
+              0,
+              0,
+              1,
+              0
+            ],
+            [
+              5,
+              7,
+              4,
+              3,
+              2,
+              1
+            ],
+            [
+              8,
+              9,
+              11,
+              6,
+              null,
+              4
+            ],
+            [
+              1,
+              0,
+              2,
+              1,
+              0,
+              0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "管理与决策",
+      "lead": "状态要有判据，风险要有影响和支持，决策要有理由，行动要有负责人和完成标准。",
+      "blocks": [
+        {
+          "type": "rag",
+          "title": "项目健康度",
+          "criteria": {
+            "green": "里程碑按期、无 P0 阻塞",
+            "yellow": "延期 ≤3 天或存在已知风险",
+            "red": "延期 >3 天或 P0 阻塞未解"
+          },
+          "items": [
+            {
+              "name": "支付改造",
+              "status": "green",
+              "summary": "联调完成，回归 80%",
+              "owner": "张三",
+              "due": "9/20",
+              "progress": 80
+            },
+            {
+              "name": "对账服务",
+              "status": "red",
+              "summary": "测试环境未就绪，阻塞 2 天",
+              "owner": "王五",
+              "due": "9/18",
+              "progress": 35
+            },
+            {
+              "name": "数据迁移",
+              "status": "yellow",
+              "summary": "脚本就绪，待 DBA 排期",
+              "owner": "赵六"
+            },
+            {
+              "name": "运营后台",
+              "status": "grey",
+              "summary": "下迭代启动"
+            }
+          ]
+        },
+        {
+          "type": "risks",
+          "title": "风险清单",
+          "items": [
+            {
+              "title": "验收账号未开通",
+              "level": "high",
+              "impact": "验收顺延 1 天",
+              "mitigation": "先用预发环境走通主流程",
+              "support": "请环境负责人 9/18 10:00 前开通",
+              "owner": "张三",
+              "due": "9/18",
+              "status": "open"
+            },
+            {
+              "title": "第三方接口限流",
+              "level": "medium",
+              "impact": "高峰期对账延迟约 15 分钟",
+              "mitigation": "增加本地重试与退避"
+            },
+            {
+              "title": "文档未同步",
+              "level": "low"
+            }
+          ]
+        },
+        {
+          "type": "decisions",
+          "title": "决策记录",
+          "items": [
+            {
+              "decision": "功夫麻将不作为正式合入交付",
+              "status": "approved",
+              "reason": "缺完整胡牌判定，生产路径仍有占位",
+              "alternatives": "先合入逻辑模块再补齐（被否：会把占位带进产品）",
+              "owner": "项目审查会",
+              "date": "2026-09-17"
+            },
+            {
+              "decision": "继续投入外置编排原型",
+              "status": "proposed",
+              "reason": "直接对应本次暴露的越权问题",
+              "condition": "同案例单叶闭环对照通过后再扩大"
+            },
+            {
+              "decision": "Web 端是否参与配置发布",
+              "status": "pending",
+              "reason": "尚无确认人"
+            }
+          ]
+        },
+        {
+          "type": "actions",
+          "title": "下期行动",
+          "items": [
+            {
+              "priority": "P0",
+              "task": "补齐胡牌结构判定",
+              "owner": "李四",
+              "due": "9/25",
+              "acceptance": "和牌结构与番型分开验证，补 10 条反例",
+              "status": "planned"
+            },
+            {
+              "priority": "P1",
+              "task": "票据缺失故障注入回归",
+              "owner": "王五",
+              "due": "9/22",
+              "acceptance": "四类故障均可恢复",
+              "status": "active"
+            },
+            {
+              "priority": "P2",
+              "task": "补 027～029 独立评审",
+              "owner": "赵六",
+              "due": "9/30"
+            }
+          ]
+        },
+        {
+          "type": "items",
+          "title": "事项列表（兼容旧版日报格式）",
+          "items": [
+            {
+              "title": "支付接口联调",
+              "detail": "6 个接口联调完成，进入回归验证。",
+              "status": "done",
+              "tags": [
+                "支付",
+                "联调"
+              ]
+            },
+            {
+              "title": "支付链路回归",
+              "detail": "余下为异常场景验证。",
+              "status": "active",
+              "progress": 80,
+              "source": "虚构示例 · 测试记录"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "进度与流程",
+      "lead": "`timeline` 讲发生了什么，`gantt` 讲计划和实际差多少，`steps` 讲流程走到哪一步，`kanban` 讲任务池分布。",
+      "blocks": [
+        {
+          "type": "timeline",
+          "title": "关键里程碑（横排）",
+          "layout": "horizontal",
+          "items": [
+            {
+              "date": "09-01",
+              "title": "需求冻结",
+              "status": "done"
+            },
+            {
+              "date": "09-08",
+              "title": "联调完成",
+              "status": "done"
+            },
+            {
+              "date": "09-15",
+              "title": "提测",
+              "status": "active",
+              "desc": "回归 80%"
+            },
+            {
+              "date": "09-22",
+              "title": "灰度 10%",
+              "status": "planned"
+            },
+            {
+              "date": "09-29",
+              "title": "全量",
+              "status": "planned"
+            }
+          ]
+        },
+        {
+          "type": "gantt",
+          "title": "迭代排期（计划 vs 实际）",
+          "today": "2026-09-16",
+          "items": [
+            {
+              "group": "开发",
+              "task": "接口开发",
+              "start": "2026-09-01",
+              "end": "2026-09-07",
+              "actual_start": "2026-09-01",
+              "actual_end": "2026-09-08",
+              "status": "done",
+              "owner": "张三"
+            },
+            {
+              "group": "开发",
+              "task": "联调",
+              "start": "2026-09-06",
+              "end": "2026-09-12",
+              "actual_start": "2026-09-08",
+              "actual_end": "2026-09-14",
+              "status": "done"
+            },
+            {
+              "group": "测试",
+              "task": "回归测试",
+              "start": "2026-09-12",
+              "end": "2026-09-19",
+              "progress": 80,
+              "status": "active"
+            },
+            {
+              "group": "测试",
+              "task": "验收",
+              "start": "2026-09-18",
+              "end": "2026-09-21",
+              "status": "risk"
+            },
+            {
+              "group": "发布",
+              "task": "灰度上线",
+              "start": "2026-09-22",
+              "milestone": true,
+              "status": "planned"
+            }
+          ]
+        },
+        {
+          "type": "steps",
+          "title": "发布流程",
+          "items": [
+            {
+              "title": "代码评审",
+              "status": "done"
+            },
+            {
+              "title": "自动化测试",
+              "status": "done"
+            },
+            {
+              "title": "预发验证",
+              "status": "active",
+              "desc": "等待验收账号"
+            },
+            {
+              "title": "灰度发布",
+              "status": "planned"
+            },
+            {
+              "title": "全量",
+              "status": "planned"
+            }
+          ]
+        },
+        {
+          "type": "kanban",
+          "title": "迭代看板",
+          "columns": [
+            {
+              "title": "待开始",
+              "cards": [
+                {
+                  "title": "运营后台导出",
+                  "meta": "P2 · 赵六"
+                },
+                "文档同步"
+              ]
+            },
+            {
+              "title": "进行中",
+              "tone": "accent",
+              "cards": [
+                {
+                  "title": "回归测试",
+                  "meta": "P0 · 李四",
+                  "tags": [
+                    "测试"
+                  ]
+                },
+                {
+                  "title": "数据迁移脚本",
+                  "meta": "P1"
+                }
+              ]
+            },
+            {
+              "title": "阻塞",
+              "tone": "risk",
+              "cards": [
+                {
+                  "title": "对账服务联调",
+                  "meta": "等测试环境"
+                }
+              ]
+            },
+            {
+              "title": "已完成",
+              "tone": "good",
+              "cards": [
+                {
+                  "title": "支付接口"
+                },
+                {
+                  "title": "订单改造"
+                },
+                {
+                  "title": "监控告警"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "分析框架",
+      "lead": "框架只在能改变判断时使用：选型用 `comparison`，排优先级用 `quadrant`，评风险用 `risk-matrix`，找根因用 `fishbone`，讲论证层级用 `pyramid`，并列框架用 `grid`。",
+      "blocks": [
+        {
+          "type": "comparison",
+          "title": "消息队列选型",
+          "options": [
+            {
+              "name": "Kafka",
+              "recommended": true,
+              "tag": "现有"
+            },
+            {
+              "name": "RocketMQ"
+            },
+            {
+              "name": "RabbitMQ"
+            }
+          ],
+          "criteria": [
+            {
+              "label": "吞吐量",
+              "weight": "权重 30%",
+              "values": [
+                {
+                  "text": "百万级 / 秒",
+                  "tone": "good"
+                },
+                "十万级 / 秒",
+                {
+                  "text": "万级 / 秒",
+                  "tone": "warn"
+                }
+              ]
+            },
+            {
+              "label": "事务消息",
+              "values": [
+                "需自行实现",
+                {
+                  "text": "原生支持",
+                  "tone": "good"
+                },
+                "插件支持"
+              ]
+            },
+            {
+              "label": "团队经验",
+              "values": [
+                {
+                  "text": "3 人熟练",
+                  "tone": "good"
+                },
+                "无",
+                "1 人"
+              ]
+            },
+            {
+              "label": "运维成本",
+              "values": [
+                "已有集群，增量低",
+                "需新建集群",
+                "需新建集群"
+              ]
+            }
+          ],
+          "verdict": "推荐沿用 **Kafka**：吞吐与团队经验占优；事务消息用本地消息表补齐。若后续强依赖事务消息，再评估 RocketMQ。"
+        },
+        {
+          "type": "columns",
+          "columns": [
+            [
+              {
+                "type": "quadrant",
+                "title": "需求优先级",
+                "x": {
+                  "label": "投入",
+                  "low": "小",
+                  "high": "大"
+                },
+                "y": {
+                  "label": "价值",
+                  "low": "低",
+                  "high": "高"
+                },
+                "quadrants": {
+                  "tl": "速赢：优先做",
+                  "tr": "战略：规划做",
+                  "bl": "填空：有空做",
+                  "br": "慎做"
+                },
+                "items": [
+                  {
+                    "label": "导出报表",
+                    "x": 2,
+                    "y": 7.5,
+                    "tone": "good"
+                  },
+                  {
+                    "label": "对账重构",
+                    "x": 8,
+                    "y": 9,
+                    "tone": "accent"
+                  },
+                  {
+                    "label": "换肤",
+                    "x": 3,
+                    "y": 2
+                  },
+                  {
+                    "label": "自研网关",
+                    "x": 9,
+                    "y": 3,
+                    "tone": "risk"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "risk-matrix",
+                "title": "风险矩阵",
+                "scale": 5,
+                "items": [
+                  {
+                    "label": "验收账号未开通",
+                    "likelihood": 4,
+                    "impact": 3
+                  },
+                  {
+                    "label": "第三方限流",
+                    "likelihood": 3,
+                    "impact": 4
+                  },
+                  {
+                    "label": "核心人员请假",
+                    "likelihood": 2,
+                    "impact": 4
+                  },
+                  {
+                    "label": "文档未同步",
+                    "likelihood": 4,
+                    "impact": 1
+                  }
+                ]
+              }
+            ]
+          ]
+        },
+        {
+          "type": "fishbone",
+          "title": "良率下降根因（鱼骨图）",
+          "effect": "X 工序良率降至 94%",
+          "categories": [
+            {
+              "name": "人",
+              "causes": [
+                "新员工未培训",
+                "夜班交接遗漏"
+              ]
+            },
+            {
+              "name": "机",
+              "causes": [
+                "夹具磨损",
+                "温控漂移 ±3℃"
+              ]
+            },
+            {
+              "name": "料",
+              "causes": [
+                "供应商批次更换",
+                "来料含水率偏高"
+              ]
+            },
+            {
+              "name": "法",
+              "causes": [
+                "作业指导书未更新"
+              ]
+            },
+            {
+              "name": "环",
+              "causes": [
+                "车间湿度超标"
+              ]
+            },
+            {
+              "name": "测",
+              "causes": [
+                "检具未校准",
+                "抽样比例过低"
+              ]
+            }
+          ]
+        },
+        {
+          "type": "columns",
+          "ratio": "1:1",
+          "columns": [
+            [
+              {
+                "type": "pyramid",
+                "title": "结论 → 论据 → 事实",
+                "levels": [
+                  {
+                    "title": "不可上线",
+                    "desc": "核心结论"
+                  },
+                  {
+                    "title": "玩法未闭环",
+                    "desc": "缺胡牌结构判定",
+                    "tone": "info"
+                  },
+                  {
+                    "title": "工程未接入",
+                    "desc": "无根构建、无服务进程",
+                    "tone": "info"
+                  },
+                  {
+                    "title": "证据",
+                    "desc": "源码、构建文件、审计现场运行结果",
+                    "tone": "muted"
+                  }
+                ]
+              }
+            ],
+            [
+              {
+                "type": "grid",
+                "title": "复盘 KISS",
+                "cells": [
+                  {
+                    "title": "Keep 保持",
+                    "tone": "good",
+                    "items": [
+                      "干净单叶全流程",
+                      "证据绑定"
+                    ]
+                  },
+                  {
+                    "title": "Improve 改进",
+                    "tone": "warn",
+                    "items": [
+                      "异常恢复时长"
+                    ]
+                  },
+                  {
+                    "title": "Start 开始",
+                    "tone": "accent",
+                    "items": [
+                      "故障注入回归"
+                    ]
+                  },
+                  {
+                    "title": "Stop 停止",
+                    "tone": "risk",
+                    "items": [
+                      "主会话直接改台账"
+                    ]
+                  }
+                ]
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "title": "版式与素材",
+      "lead": "`columns` 把任意组件并排，比例可调；`image` 内嵌截图（本地文件自动转内嵌数据）；`pagebreak` 控制打印分页。",
+      "blocks": [
+        {
+          "type": "columns",
+          "ratio": "2:1",
+          "columns": [
+            [
+              {
+                "type": "markdown",
+                "text": "左栏占 2 份：适合正文或表格。\n\n右栏占 1 份：适合指标卡、小图表或提示框。"
+              }
+            ],
+            [
+              {
+                "type": "callout",
+                "tone": "accent",
+                "label": "用法",
+                "text": "`\"ratio\": \"2:1\"`，栏数 2–4。"
+              }
+            ]
+          ]
+        },
+        {
+          "type": "pagebreak"
+        },
+        {
+          "type": "image",
+          "alt": "示意图占位",
+          "width": "third",
+          "caption": "图片示例：写 path 引用本地截图，渲染时自动内嵌",
+          "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAzMjAgMTYwJz48cmVjdCB3aWR0aD0nMzIwJyBoZWlnaHQ9JzE2MCcgZmlsbD0nI2VlZjRmYScvPjxyZWN0IHg9JzI0JyB5PScyNCcgd2lkdGg9JzEyMCcgaGVpZ2h0PScxMicgcng9JzInIGZpbGw9JyMyZjZlYTgnLz48cmVjdCB4PScyNCcgeT0nNTAnIHdpZHRoPScyNzInIGhlaWdodD0nOCcgcng9JzInIGZpbGw9JyNjZmRiZTgnLz48cmVjdCB4PScyNCcgeT0nNjgnIHdpZHRoPScyMjAnIGhlaWdodD0nOCcgcng9JzInIGZpbGw9JyNjZmRiZTgnLz48cmVjdCB4PScyNCcgeT0nOTYnIHdpZHRoPSc4MCcgaGVpZ2h0PSc0MCcgcng9JzMnIGZpbGw9JyMzZjhmNjgnLz48cmVjdCB4PScxMjAnIHk9JzkwJyB3aWR0aD0nODAnIGhlaWdodD0nNDYnIHJ4PSczJyBmaWxsPScjNWI5Y2M0Jy8+PHJlY3QgeD0nMjE2JyB5PScxMDYnIHdpZHRoPSc4MCcgaGVpZ2h0PSczMCcgcng9JzMnIGZpbGw9JyNjOWE1M2YnLz48L3N2Zz4="
+        }
+      ]
+    }
+  ],
+  "footer": "组件库演示 · 所有内容与数字均为虚构"
+}

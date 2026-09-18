@@ -47,3 +47,7 @@
 
 ✅ 联调完成 80%、上线后崩溃率下降 0.3pp、DAU 环比 +5%、P0 阻塞已解除
 ❌ 基本完成、进展顺利、效果不错、后续持续优化
+
+## HTML 组件映射
+
+OKR / KR 进度 → `scorecard` 或 `gauge`；工作线健康度 → `rag`；迭代排期 → `gantt`；任务池 → `kanban`；Bug 分布 → `bar` / `heatmap`（模块 × 周）；指标趋势 → `line`；方案选型 → `comparison`；故障 → `timeline` + `fishbone`；下周计划 → `actions`（P0–P2）。

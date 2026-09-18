@@ -1,0 +1,72 @@
+{
+  "title": "会员系统重构项目复盘",
+  "subtitle": "会员组 · 复盘范围 2026-06-01 至 09-10",
+  "date": "2026.09.15",
+  "report_type": "RETROSPECTIVE / 复盘",
+  "genre": "项目复盘（GRAI）",
+  "industry": "互联网研发",
+  "audience": "项目组与相关方",
+  "demo": true,
+  "numbering": "cn",
+  "summary": "项目延期 12 天上线，性能与稳定性目标全部达成；延期的主要促成条件是**需求在开发中期变更 3 次**且没有变更评审。下一轮只改两件事：需求冻结后变更必须评审、联调提前到开发第二周。",
+  "highlights": [
+    {"label": "保持", "tone": "good", "text": "灰度 + 自动回滚机制，上线零事故。"},
+    {"label": "改变", "tone": "risk", "text": "中期需求变更无评审，直接导致延期。"},
+    {"label": "下一轮实验", "tone": "accent", "text": "变更评审 + 提前联调，10 月迭代试行。"}
+  ],
+  "sections": [
+    {
+      "title": "目标回顾（G）",
+      "lead": "项目立项时定了四个可衡量的目标。其中上线时间是唯一未达成的目标。",
+      "blocks": [
+        {"type": "scorecard", "source": "虚构示例 · 立项文档与上线报告", "items": [
+          {"label": "上线周期", "target": 90, "actual": 102, "unit": "天", "lower_is_better": true},
+          {"label": "接口 P99 延迟", "target": 120, "actual": 86, "unit": "ms", "lower_is_better": true},
+          {"label": "可用性", "target": 99.9, "actual": 99.95, "unit": "%"},
+          {"label": "迁移数据一致率", "target": 100, "actual": 100, "unit": "%"}
+        ]}
+      ]
+    },
+    {
+      "title": "结果与过程（R）",
+      "blocks": [
+        {"type": "timeline", "items": [
+          {"date": "06-01", "title": "立项", "status": "done"},
+          {"date": "06-20", "title": "需求冻结", "status": "done"},
+          {"date": "07-08", "title": "第 1 次需求变更：积分规则", "status": "risk", "desc": "返工 4 天"},
+          {"date": "07-25", "title": "第 2、3 次需求变更：等级体系", "status": "risk", "desc": "返工 6 天，联调推迟"},
+          {"date": "08-30", "title": "计划上线日", "status": "delayed"},
+          {"date": "09-10", "title": "实际上线（灰度 → 全量）", "status": "done", "desc": "零事故"}
+        ]}
+      ]
+    },
+    {
+      "title": "原因分析（A）",
+      "lead": "以下是有证据支持的促成条件，不是单一根因。“联调发现接口不一致”是否与文档缺失直接相关仍待验证。",
+      "blocks": [
+        {"type": "waterfall", "title": "延期 12 天由什么构成", "unit": "天", "source": "虚构示例 · 项目日志与排期对比", "start": {"label": "计划", "value": 90}, "data": [{"label": "需求变更返工", "value": 10}, {"label": "联调延后", "value": 4}, {"label": "环境等待", "value": 2}, {"label": "灰度提前完成", "value": -4}], "end_label": "实际"},
+        {"type": "evidence", "items": [
+          {"source": "需求变更记录 3 条", "proves": "中期变更 3 次，均无评审记录", "kind": "observed"},
+          {"source": "排期对比表", "proves": "返工合计 10 天", "kind": "observed"},
+          {"source": "联调问题单", "proves": "接口不一致 11 个，可能与文档缺失有关", "boundary": "未做对照，属于推断", "kind": "inferred"}
+        ]}
+      ]
+    },
+    {
+      "title": "规律总结（I）",
+      "blocks": [
+        {"type": "grid", "cells": [
+          {"title": "Keep 保持", "tone": "good", "items": ["灰度 + 自动回滚", "数据迁移双写校验"]},
+          {"title": "Improve 改进", "tone": "warn", "items": ["接口文档与代码同步更新"]},
+          {"title": "Start 开始", "tone": "accent", "items": ["冻结后变更必须评审", "开发第 2 周开始联调"]},
+          {"title": "Stop 停止", "tone": "risk", "items": ["口头确认需求变更"]}
+        ]},
+        {"type": "actions", "title": "改进实验（10 月迭代试行，11 月复查）", "items": [
+          {"task": "需求冻结后的变更走评审，记录影响天数", "owner": "产品负责人", "due": "10/01 起", "acceptance": "变更 100% 有评审记录；复查时对比返工天数"},
+          {"task": "联调提前到开发第 2 周", "owner": "技术负责人", "due": "10/08", "acceptance": "联调问题在第 3 周前发现 ≥ 80%"}
+        ]}
+      ]
+    }
+  ],
+  "footer": "复盘示例 · 所有内容与数字均为虚构"
+}

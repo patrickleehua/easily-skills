@@ -50,3 +50,7 @@
 
 ✅ 良率 96.2%（目标 97%，缺口 0.8pp，主因为 X 工序参数漂移，已对策并于 9/5 验证 3 批恢复至 97.1%）
 ❌ 良率有点低、设备偶尔出问题、下周整改
+
+## HTML 组件映射
+
+核心指标 → `scorecard`（能耗等用 `lower_is_better`）；产量计划 vs 实际 → 分组 `column`；工序 × 周不良 → `heatmap`；根因 → `fishbone`；8D 问题对策 → `table`（`status` 列）；EHS → `kpis` + `checklist`；改善项目 → `rag` / `gantt`。示例：`assets/examples/monthly-manufacturing.json`。

@@ -1,0 +1,80 @@
+{
+  "title": "向量检索引擎选型验证报告",
+  "subtitle": "搜索平台组 · 验证周期 2026-09-01 至 09-12",
+  "date": "2026.09.12",
+  "report_type": "TECH VALIDATION / 技术验证",
+  "genre": "技术验证（POC）",
+  "industry": "互联网研发",
+  "audience": "架构评审会",
+  "demo": true,
+  "numbering": "cn",
+  "summary": "在 1000 万条 768 维向量、同一硬件下，**方案 A 满足全部 4 项判据**，P99 延迟 38ms、召回率 96.1%；方案 B 召回率达标但 P99 超标。==建议采用方案 A==，前提是运维接受新增一套集群。",
+  "highlights": [
+    {"label": "推荐", "tone": "good", "text": "方案 A 四项判据全部通过。"},
+    {"label": "未验证", "tone": "warn", "text": "亿级数据量与多租户隔离**本轮未测**。"},
+    {"label": "决策点", "tone": "accent", "text": "运维是否接受新增集群的维护成本。"}
+  ],
+  "metrics": [
+    {"label": "方案 A P99", "value": "38", "unit": "ms", "target": "判据 ≤ 50ms", "tone": "good", "source": "虚构示例 · 压测报告 R3"},
+    {"label": "方案 A 召回率@10", "value": "96.1", "unit": "%", "target": "判据 ≥ 95%", "tone": "good", "source": "虚构示例 · 评测集 v2"},
+    {"label": "方案 A 峰值 QPS", "value": "4,200", "target": "判据 ≥ 3,000", "tone": "good", "source": "虚构示例 · 压测报告 R3"}
+  ],
+  "sections": [
+    {
+      "title": "验证目标与判据",
+      "lead": "本轮只回答一个问题：在现有数据规模下，哪个方案能同时满足延迟、召回、吞吐和运维四项要求。判据在验证开始前确定，未因结果调整。",
+      "blocks": [
+        {"type": "table", "columns": ["判据", "阈值", "测量方式"], "rows": [
+          ["P99 延迟", "≤ 50ms", "wrk2 恒定 2000 QPS 压 30 分钟"],
+          ["召回率@10", "≥ 95%", "对照暴力检索结果，评测集 5000 条"],
+          ["峰值 QPS", "≥ 3000", "逐步加压至 P99 > 100ms"],
+          ["运维成本", "可接受", "部署步骤、监控接入、扩容方式"]
+        ]}
+      ]
+    },
+    {
+      "title": "方案对比",
+      "blocks": [
+        {"type": "comparison", "options": [{"name": "方案 A · 独立引擎", "recommended": true}, {"name": "方案 B · 数据库插件"}, {"name": "方案 C · 现有搜索扩展", "tag": "基线"}], "criteria": [
+          {"label": "P99 延迟", "values": [{"text": "38ms", "tone": "good"}, {"text": "71ms", "tone": "risk"}, {"text": "126ms", "tone": "risk"}]},
+          {"label": "召回率@10", "values": [{"text": "96.1%", "tone": "good"}, {"text": "95.4%", "tone": "good"}, {"text": "91.2%", "tone": "risk"}]},
+          {"label": "峰值 QPS", "values": [{"text": "4,200", "tone": "good"}, "3,100", {"text": "1,800", "tone": "risk"}]},
+          {"label": "运维成本", "values": [{"text": "新增集群，需培训", "tone": "warn"}, "复用现有数据库", "无新增"]}
+        ], "verdict": "方案 A 是唯一四项全部达标的方案；方案 B 的延迟问题来自插件单线程检索，官方路线图未给修复时间。"}
+      ]
+    },
+    {
+      "title": "压测结果",
+      "lead": "三个方案在相同 16 核 64G 节点上测试。随并发增加，方案 B、C 的 P99 在 1500 QPS 后明显抬升。",
+      "blocks": [
+        {"type": "columns", "columns": [
+          [{"type": "line", "title": "P99 延迟随 QPS 变化", "unit": "ms", "source": "虚构示例 · 压测报告 R3", "x": ["500", "1000", "1500", "2000", "3000"], "series": [{"name": "方案 A", "points": [12, 18, 24, 31, 38], "color": "good"}, {"name": "方案 B", "points": [15, 26, 44, 71, 118], "color": "warn"}, {"name": "方案 C", "points": [30, 55, 96, 126, 210], "color": "risk"}]}],
+          [{"type": "bar", "title": "召回率@10", "unit": "%", "max": 100, "source": "虚构示例 · 评测集 v2", "data": [{"label": "方案 A", "value": 96.1, "color": "good"}, {"label": "方案 B", "value": 95.4}, {"label": "方案 C", "value": 91.2, "color": "risk"}]}]
+        ]}
+      ]
+    },
+    {
+      "title": "验证过程",
+      "blocks": [
+        {"type": "steps", "items": [
+          {"title": "确定判据", "status": "done", "desc": "9/01 评审通过"},
+          {"title": "搭建环境", "status": "done", "desc": "三套同配置"},
+          {"title": "导入数据", "status": "done", "desc": "1000 万条"},
+          {"title": "压测与评测", "status": "done", "desc": "各 3 轮"},
+          {"title": "亿级验证", "status": "planned", "desc": "下一轮"}
+        ]}
+      ]
+    },
+    {
+      "title": "结论、边界与遗留风险",
+      "blocks": [
+        {"type": "callout", "tone": "warn", "label": "结论边界", "text": "本结论只适用于 **1000 万条、单租户** 场景。亿级数据量、多租户隔离和跨机房部署本轮未验证，不能外推。"},
+        {"type": "risks", "items": [
+          {"title": "团队缺少方案 A 运维经验", "level": "medium", "impact": "故障排查时间可能拉长", "mitigation": "上线前完成 2 次故障演练与运维培训", "owner": "运维组"},
+          {"title": "亿级数据表现未知", "level": "medium", "impact": "明年数据量增长后可能需要重新选型", "mitigation": "Q4 补做亿级验证"}
+        ]}
+      ]
+    }
+  ],
+  "footer": "技术验证示例 · 所有内容与数字均为虚构"
+}

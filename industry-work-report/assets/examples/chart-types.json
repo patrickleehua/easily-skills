@@ -1,0 +1,273 @@
+[
+  {
+    "type": "bar",
+    "title": "各端工作包数量",
+    "note": "类别对比用横向条形",
+    "unit": "个",
+    "source": "虚构示例 · 工作包清单",
+    "data": [
+      {
+        "label": "服务端",
+        "value": 9
+      },
+      {
+        "label": "客户端",
+        "value": 4
+      },
+      {
+        "label": "Web 端",
+        "value": 0,
+        "color": "muted"
+      }
+    ]
+  },
+  {
+    "type": "column",
+    "title": "每日提交数",
+    "note": "周期对比用纵向柱状",
+    "unit": "次",
+    "source": "虚构示例 · Git 记录",
+    "data": [
+      {
+        "label": "9/14",
+        "value": 8
+      },
+      {
+        "label": "9/15",
+        "value": 14
+      },
+      {
+        "label": "9/16",
+        "value": 11
+      },
+      {
+        "label": "9/17",
+        "value": 9
+      }
+    ]
+  },
+  {
+    "type": "line",
+    "title": "回归通过率走势",
+    "note": "趋势用折线，最多 4 条序列",
+    "unit": "%",
+    "source": "虚构示例 · 测试记录",
+    "x": [
+      "第 1 周",
+      "第 2 周",
+      "第 3 周",
+      "第 4 周"
+    ],
+    "series": [
+      {
+        "name": "通过率",
+        "points": [
+          62,
+          71,
+          78,
+          88
+        ]
+      },
+      {
+        "name": "覆盖率",
+        "points": [
+          40,
+          55,
+          61,
+          70
+        ]
+      }
+    ]
+  },
+  {
+    "type": "donut",
+    "title": "工时分布",
+    "note": "构成占比用环图",
+    "unit": "h",
+    "center": "总工时",
+    "source": "虚构示例 · 工时表",
+    "data": [
+      {
+        "label": "迁移完善",
+        "value": 26
+      },
+      {
+        "label": "跑测验证",
+        "value": 18
+      },
+      {
+        "label": "问题修复",
+        "value": 11
+      },
+      {
+        "label": "评审沟通",
+        "value": 6
+      }
+    ]
+  },
+  {
+    "type": "stacked",
+    "title": "工作包状态构成",
+    "note": "单一总量的状态拆分",
+    "unit": "个",
+    "source": "虚构示例 · 台账",
+    "data": [
+      {
+        "label": "草稿",
+        "value": 13,
+        "color": "warn"
+      },
+      {
+        "label": "已确认",
+        "value": 5,
+        "color": "good"
+      },
+      {
+        "label": "待决策",
+        "value": 8,
+        "color": "risk"
+      }
+    ]
+  },
+  {
+    "type": "progress",
+    "title": "主线完成度",
+    "note": "多项任务完成度，value 为 0–100",
+    "source": "虚构示例 · 周计划",
+    "data": [
+      {
+        "label": "流程迁移",
+        "value": 85,
+        "note": "异常与并发路径待验证"
+      },
+      {
+        "label": "跨端拆分",
+        "value": 60,
+        "color": "warn",
+        "note": "上游基线未确认"
+      },
+      {
+        "label": "原型验证",
+        "value": 30,
+        "color": "muted"
+      }
+    ]
+  },
+  {
+    "type": "funnel",
+    "title": "需求推进转化",
+    "note": "阶段转化用漏斗，右侧为环比上一层",
+    "unit": "项",
+    "source": "虚构示例 · 需求台账",
+    "data": [
+      {
+        "label": "识别事实",
+        "value": 48
+      },
+      {
+        "label": "形成工作包",
+        "value": 13
+      },
+      {
+        "label": "进入评审",
+        "value": 5
+      },
+      {
+        "label": "完成签核",
+        "value": 2
+      }
+    ]
+  },
+  {
+    "type": "gauge",
+    "title": "季度目标完成度",
+    "note": "1–6 个整体完成度 / 达成率，value 为 0–100",
+    "source": "虚构示例 · OKR",
+    "items": [
+      {
+        "label": "O1 增长",
+        "value": 86
+      },
+      {
+        "label": "O2 质量",
+        "value": 72,
+        "color": "warn"
+      },
+      {
+        "label": "O3 人才",
+        "value": 40,
+        "color": "risk",
+        "note": "招聘滞后"
+      }
+    ]
+  },
+  {
+    "type": "waterfall",
+    "title": "利润变化构成",
+    "note": "期初 → 各项增减 → 期末；正数绿、负数红",
+    "unit": "万",
+    "source": "虚构示例 · 财务",
+    "start": {
+      "label": "上月",
+      "value": 120
+    },
+    "data": [
+      {
+        "label": "新签",
+        "value": 38
+      },
+      {
+        "label": "续费",
+        "value": 15
+      },
+      {
+        "label": "退款",
+        "value": -9
+      },
+      {
+        "label": "成本",
+        "value": -22
+      }
+    ],
+    "end_label": "本月"
+  },
+  {
+    "type": "heatmap",
+    "title": "各模块每周缺陷数",
+    "note": "两个维度交叉的强度；null 表示无数据",
+    "unit": "个",
+    "tone": "risk",
+    "source": "虚构示例 · 缺陷系统",
+    "x": [
+      "W1",
+      "W2",
+      "W3",
+      "W4"
+    ],
+    "y": [
+      "支付",
+      "订单",
+      "对账"
+    ],
+    "values": [
+      [
+        2,
+        1,
+        0,
+        1
+      ],
+      [
+        5,
+        7,
+        4,
+        3
+      ],
+      [
+        8,
+        9,
+        null,
+        6
+      ]
+    ]
+  }
+]

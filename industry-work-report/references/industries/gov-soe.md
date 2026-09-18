@@ -46,3 +46,7 @@
 
 ✅ 累计完成 X 项、完成率 X%、覆盖 X 个单位；已建立台账并实行销号管理
 ❌ emoji、口语词（搞、弄）、绝对化表述（完全解决、彻底杜绝——除非确已实现）
+
+## HTML 组件映射
+
+重点任务推进 → `table`（`status` 列）或 `rag`；目标完成 → `scorecard`；时间节点 → `timeline`；问题整改 → `table`（问题 / 措施 / 责任单位 / 时限 / 状态）；需协调事项 → `callout`。公文风格建议 `"numbering": "cn"`、`"indent": true`、主题 `editorial`，图表从简。
