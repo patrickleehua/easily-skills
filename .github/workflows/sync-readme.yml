@@ -1,0 +1,37 @@
+name: Sync README catalog
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-readme-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+
+      - name: Regenerate skills catalog
+        run: uv run scripts/sync_readme.py
+
+      # Pushes made with GITHUB_TOKEN do not trigger new workflow runs, so this cannot loop.
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- README.md README.zh-CN.md; then
+            echo "README already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md README.zh-CN.md
+          git commit -m "docs: sync skills catalog in README"
+          git push

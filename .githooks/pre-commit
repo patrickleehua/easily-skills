@@ -1,0 +1,11 @@
+#!/bin/sh
+# Regenerate the README skills catalog before each commit.
+# Enable once per clone: git config core.hooksPath .githooks
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "pre-commit: uv not found, skipping README sync (CI will sync on push)"
+  exit 0
+fi
+
+uv run --quiet scripts/sync_readme.py >/dev/null || exit 1
+git add README.md README.zh-CN.md
