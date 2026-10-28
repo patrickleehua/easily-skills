@@ -1,0 +1,4 @@
+interface:
+  display_name: "阿里云百炼 API 工具"
+  short_description: "调用百炼语音合成接口，将文字保存为音频，并提供结构化执行结果与下载恢复。"
+  default_prompt: "使用 $bailian-api-tools 把这段文字合成为中文语音并保存音频。"

@@ -171,6 +171,12 @@ skills:
       zh: MiniMax 语音合成、声音克隆、音色设计与音色管理。
       en: MiniMax text-to-speech, voice cloning, voice design and voice management.
 
+  bailian-api-tools:
+    category: aigc
+    summary:
+      zh: 百炼 Qwen 与 CosyVoice 文字转语音，生成音频及结构化执行结果。
+      en: Generate Qwen and CosyVoice speech via Bailian, with audio files and structured results.
+
   v36-api-tools:
     category: aigc
     summary:

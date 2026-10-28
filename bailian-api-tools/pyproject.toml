@@ -1,0 +1,14 @@
+[project]
+name = "bailian-api-tools"
+version = "0.1.0"
+description = "Dependency-free Alibaba Cloud Model Studio TTS tools for agents"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+test = [
+    "jsonschema>=4.23,<5",
+]

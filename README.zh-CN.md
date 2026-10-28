@@ -8,7 +8,7 @@
 
 <!-- BEGIN:badges -->
 <!-- 本区块由 scripts/sync_readme.py 自动生成，请勿手改 -->
-![技能](https://img.shields.io/badge/%E6%8A%80%E8%83%BD-19-6366f1?style=flat-square) ![分类](https://img.shields.io/badge/%E5%88%86%E7%B1%BB-7-0ea5e9?style=flat-square)
+![技能](https://img.shields.io/badge/%E6%8A%80%E8%83%BD-20-6366f1?style=flat-square) ![分类](https://img.shields.io/badge/%E5%88%86%E7%B1%BB-7-0ea5e9?style=flat-square)
 <!-- END:badges -->
 ![Claude Code](https://img.shields.io/badge/Claude_Code-ready-d97757?style=flat-square)
 ![Codex](https://img.shields.io/badge/Codex-ready-10a37f?style=flat-square)
@@ -36,7 +36,7 @@
 | 🛠️ [研发工程](#cat-engineering) | 4 | `analysis-projects` `code-test-boundaries` `git-change-notes` `scenario-acceptance` |
 | 🤖 [Agent 与 Skill 生态](#cat-agent) | 3 | `agent-skills-helper` `cli-session-log-audit` `openclaw-helper` |
 | ✍️ [写作与报告](#cat-writing) | 3 | `awesome-report` `project-to-cv` `wechat-article-writer` |
-| 🎨 [AIGC 创作](#cat-aigc) | 4 | `minimax-api-tools` `nano-banana-pro-prompter` `seedance-prompt-helper` `v36-api-tools` |
+| 🎨 [AIGC 创作](#cat-aigc) | 5 | `bailian-api-tools` `minimax-api-tools` `nano-banana-pro-prompter` `seedance-prompt-helper` `v36-api-tools` |
 | 🎬 [音视频工具](#cat-media) | 2 | `bili-download` `ffmpeg-tools` |
 | 📚 [学习与教育](#cat-learning) | 2 | `answer-check` `notes2questions` |
 | 💹 [金融交易](#cat-finance) | 1 | `hyperliquid-trading` |
@@ -91,6 +91,7 @@
 
 | 技能 | 简介 | 特性 |
 |---|---|---|
+| [**bailian-api-tools**](./bailian-api-tools/) | 百炼 Qwen 与 CosyVoice 文字转语音，生成音频及结构化执行结果。 | ⚙️ 脚本 · 🔑 需 Key |
 | [**minimax-api-tools**](./minimax-api-tools/) | MiniMax 语音合成、声音克隆、音色设计与音色管理。 | ⚙️ 脚本 · 🔑 需 Key |
 | [**nano-banana-pro-prompter**](./nano-banana-pro-prompter/) | 把创意需求翻译成高质量的 Nano Banana Pro 图像提示词。 | 📝 纯提示 |
 | [**seedance-prompt-helper**](./seedance-helper-skills/) | Seedance 2.0 视频提示词设计、优化与诊断（T2V / I2V / R2V）。 | 📝 纯提示 |

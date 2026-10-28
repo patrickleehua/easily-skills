@@ -1,0 +1,33 @@
+name: Bailian skill contracts
+
+on:
+  push:
+    paths: ["bailian-api-tools/**", ".github/workflows/bailian-api-tools.yml"]
+  pull_request:
+    paths: ["bailian-api-tools/**", ".github/workflows/bailian-api-tools.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: bailian-api-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.7"
+      - name: Prepare locked runtime
+        run: uv sync --locked --group test
+      - name: Check CLI and local HTTP contracts without cloud credentials
+        run: uv run --locked --no-sync python -m unittest discover -s tests -v
+      - name: Show execution environment
+        run: uv run --locked --no-sync python scripts/bailian.py doctor
