@@ -1,0 +1,4 @@
+interface:
+  display_name: "文字用例与实际验收"
+  short_description: "从需求编写文字验收用例，指导开发并执行真实验证，按风险保留回归测试"
+  default_prompt: "使用 $scenario-acceptance，结合当前需求和已有测试，编写或补全文字验收场景；按本次授权执行验证，报告证据和未验证项，不绑定特定研发流程。"

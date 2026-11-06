@@ -1,0 +1,82 @@
+{
+  "title": "支付中台研发周报",
+  "subtitle": "支付研发组 · 汇报人：示例",
+  "date": "2026.09.14 – 09.18",
+  "report_type": "WEEKLY REPORT / 周报",
+  "genre": "进度周报",
+  "industry": "互联网研发",
+  "audience": "部门负责人",
+  "demo": true,
+  "numbering": "cn",
+  "summary": "本周交付 7 个需求点（计划 8），回归测试推进至 80%；==对账服务因测试环境未就绪阻塞 2 天==，需在周五前协调环境，否则 9/22 灰度顺延。",
+  "highlights": [
+    {"label": "进展", "tone": "good", "text": "支付网关改造**联调完成**，进入回归。"},
+    {"label": "阻塞", "tone": "risk", "text": "对账服务测试环境未就绪，已阻塞 2 天。"},
+    {"label": "需要支持", "tone": "accent", "text": "请运维 9/19 12:00 前交付对账测试环境。"}
+  ],
+  "metrics": [
+    {"label": "需求交付", "value": "7", "unit": "/ 8 个", "note": "按已验收需求点统计", "source": "虚构示例 · 需求看板"},
+    {"label": "回归进度", "value": "80", "unit": "%", "delta": "较上周 +45", "tone": "good", "source": "虚构示例 · 测试记录"},
+    {"label": "新增缺陷", "value": "12", "unit": "个", "note": "P0 0 · P1 3 · P2 9", "source": "虚构示例 · 缺陷系统"},
+    {"label": "阻塞事项", "value": "1", "unit": "项", "tone": "risk", "source": "虚构示例 · 问题记录"}
+  ],
+  "sections": [
+    {
+      "title": "总体状态",
+      "lead": "三条工作线中一条按计划、一条有风险、一条已偏离。偏离项是对账服务，原因是测试环境交付延迟，不是研发进度问题。",
+      "blocks": [
+        {"type": "rag", "criteria": {"green": "里程碑按期、无 P0 阻塞", "yellow": "延期 ≤2 天或存在已知风险", "red": "延期 >2 天或 P0 阻塞未解"}, "items": [
+          {"name": "支付网关改造", "status": "green", "summary": "联调完成，回归 80%", "owner": "张三", "due": "9/20", "progress": 80},
+          {"name": "数据迁移", "status": "yellow", "summary": "脚本就绪，待 DBA 排期", "owner": "赵六", "due": "9/21"},
+          {"name": "对账服务", "status": "red", "summary": "测试环境未就绪，阻塞 2 天", "owner": "王五", "due": "9/18", "progress": 35}
+        ]}
+      ]
+    },
+    {
+      "title": "本周进展",
+      "lead": "进展按已验收产出统计，会议与沟通不计入。需求点完成 7 个，比计划少 1 个，差额来自对账服务。",
+      "blocks": [
+        {"type": "columns", "ratio": "3:2", "columns": [
+          [{"type": "table", "columns": [{"key": "item", "label": "事项"}, {"key": "result", "label": "结果"}, {"key": "status", "label": "状态", "kind": "status"}], "rows": [
+            {"item": "支付网关 6 个接口联调", "result": "全部通过，进入回归", "status": "done"},
+            {"item": "异常退款验收场景", "result": "补齐 14 条用例并交付测试", "status": "done"},
+            {"item": "支付链路回归", "result": "完成 80%，余异常场景", "status": "active"},
+            {"item": "对账服务联调", "result": "等待测试环境", "status": "blocked", "_tone": "risk"}
+          ]}],
+          [{"type": "column", "title": "需求点：计划 vs 实际", "unit": "个", "source": "虚构示例 · 需求看板", "x": ["W35", "W36", "W37", "W38"], "series": [{"name": "计划", "points": [6, 7, 8, 8], "color": "muted"}, {"name": "实际", "points": [6, 7, 7, 7]}]}]
+        ]}
+      ]
+    },
+    {
+      "title": "排期",
+      "blocks": [
+        {"type": "gantt", "today": "2026-09-18", "items": [
+          {"task": "网关联调", "start": "2026-09-08", "end": "2026-09-14", "actual_start": "2026-09-08", "actual_end": "2026-09-15", "status": "done"},
+          {"task": "回归测试", "start": "2026-09-14", "end": "2026-09-20", "progress": 80, "status": "active"},
+          {"task": "对账联调", "start": "2026-09-15", "end": "2026-09-19", "status": "blocked"},
+          {"task": "灰度 10%", "start": "2026-09-22", "milestone": true, "status": "planned"}
+        ]}
+      ]
+    },
+    {
+      "title": "风险与需要的支持",
+      "blocks": [
+        {"type": "risks", "items": [
+          {"title": "对账测试环境未就绪", "level": "high", "impact": "对账联调无法开始；若 9/19 仍未就绪，灰度顺延 ≥2 天", "support": "运维 9/19 12:00 前交付环境", "owner": "王五", "status": "open"},
+          {"title": "DBA 排期未确认", "level": "medium", "impact": "数据迁移可能与灰度窗口冲突", "mitigation": "准备可回滚的分批迁移方案"}
+        ]}
+      ]
+    },
+    {
+      "title": "下周计划",
+      "blocks": [
+        {"type": "actions", "items": [
+          {"priority": "P0", "task": "完成支付链路回归", "owner": "李四", "due": "9/20", "acceptance": "异常场景用例全部通过，缺陷 P1 清零"},
+          {"priority": "P0", "task": "对账服务联调", "owner": "王五", "due": "9/23", "acceptance": "对账差异率 0，依赖环境 9/19 就绪"},
+          {"priority": "P1", "task": "灰度 10% 发布", "owner": "张三", "due": "9/22", "acceptance": "错误率 < 0.1%，观察 24 小时"}
+        ]}
+      ]
+    }
+  ],
+  "footer": "周报示例 · 所有内容与数字均为虚构"
+}

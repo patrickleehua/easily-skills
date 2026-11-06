@@ -1,0 +1,232 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Skills 目录配置 / Skills catalog
+#
+# README.md 与 README.zh-CN.md 中的技能清单由 scripts/sync_readme.py 根据本文件
+# 和各技能的 SKILL.md 自动生成，请勿手改 README 中的自动生成区块。
+#
+# 新增技能时：
+#   1. 不改本文件也能用 —— 脚本会按 SKILL.md 的 category 字段或下方 keywords
+#      自动归类，简介取 description 首句。
+#   2. 想要更准确的分类和中英文简介，在 skills 下补一条记录即可（运行脚本时
+#      会打印可直接粘贴的模板，也可以交给 AI 按 AGENTS.md 补全）。
+#
+# 分类判定优先级：skills.<目录>.category > SKILL.md 的 category（匹配 aliases）
+#                > keywords 命中数最多的分类 > other
+# ─────────────────────────────────────────────────────────────────────────────
+
+categories:
+  - id: engineering
+    emoji: "🛠️"
+    name: { zh: 研发工程, en: Software Engineering }
+    desc:
+      zh: 读懂代码、定投入、写验收、管提交 —— 覆盖研发交付全流程。
+      en: Understand code, scope effort, verify behavior and ship clean history.
+    aliases: [project analysis / code intelligence, engineering, devops, testing]
+    keywords: [codebase, 代码库, 架构, architecture, 测试, test, 验收, acceptance, prd, git, commit, release, changelog, 评审, review]
+
+  - id: agent
+    emoji: "🤖"
+    name: { zh: Agent 与 Skill 生态, en: Agents & Skills }
+    desc:
+      zh: 编写、调试、审计 Agent Skill 与 Agent 工具链本身。
+      en: Build, debug and audit Agent Skills and the agent toolchain itself.
+    aliases: [agent, skills, assessment / support]
+    keywords: [skill.md, agent skill, skills workflow, agent, mcp, openclaw, clawbot, claude code, codex, cursor, session]
+
+  - id: writing
+    emoji: "✍️"
+    name: { zh: 写作与报告, en: Writing & Reports }
+    desc:
+      zh: 报告、文章、简历 —— 结论先行、事实可追溯的结构化写作。
+      en: Reports, articles and résumés — conclusion-first, evidence-backed writing.
+    aliases: [content-creation, writing, career, documentation]
+    keywords: [报告, report, 文章, article, 写作, writing, 简历, resume, 公众号, wechat, 文档, document]
+
+  - id: aigc
+    emoji: "🎨"
+    name: { zh: AIGC 创作, en: Generative AI }
+    desc:
+      zh: 图像 / 视频提示词工程，以及语音、图像生成类模型 API 调用。
+      en: Prompt engineering for image & video models, plus TTS and image-generation APIs.
+    aliases: [video-generation, api-tools, image-generation, aigc]
+    keywords: [prompt, 提示词, image generation, 文生图, text-to-image, tts, speech, 语音, voice, t2v, i2v, seedance, nanobanana, whisper]
+
+  - id: media
+    emoji: "🎬"
+    name: { zh: 音视频工具, en: Audio & Video }
+    desc:
+      zh: 本地音视频剪辑、转换与下载。
+      en: Local audio/video editing, conversion and downloading.
+    aliases: [media-processing, media, multimedia]
+    keywords: [ffmpeg, video, 视频, audio, 音频, bilibili, b站, download, 下载, crop, trim]
+
+  - id: learning
+    emoji: "📚"
+    name: { zh: 学习与教育, en: Learning & Education }
+    desc:
+      zh: 出题、批改、错因诊断，帮助主动回忆与查漏补缺。
+      en: Quiz generation, grading and misconception diagnosis for active recall.
+    aliases: [education / learning assessment, education, learning]
+    keywords: [quiz, 复习, 笔记, notes, grading, 批改, 作业, homework, education, 学习]
+
+  - id: finance
+    emoji: "💹"
+    name: { zh: 金融交易, en: Finance & Trading }
+    desc:
+      zh: 行情查询、账户管理与交易执行。
+      en: Market data, account management and trade execution.
+    aliases: [finance, trading, crypto]
+    keywords: [trading, 交易, hyperliquid, order, 下单, position, 仓位, leverage, 杠杆, staking, crypto]
+
+  - id: other
+    emoji: "🧰"
+    name: { zh: 其他, en: Others }
+    desc:
+      zh: 暂未归类的技能，欢迎在 catalog.yml 中为它们指定分类。
+      en: Not yet categorized — assign them a category in catalog.yml.
+    aliases: []
+    keywords: []
+
+# 按技能目录名登记。字段均可选：
+#   category: 分类 id
+#   summary:  { zh: 中文简介, en: English summary }   一句话，建议 ≤ 60 字
+#   api_key:  true   需要 API Key（目录下有 .env.example 时会自动识别）
+#   hidden:   true   不在 README 中展示
+skills:
+  analysis-projects:
+    category: engineering
+    summary:
+      zh: 深度解析代码库：架构总览、核心模块、关键流程、依赖与改进建议。
+      en: Deep-dive a codebase — architecture, key modules, workflows, dependencies and improvements.
+
+  extract-ui:
+    category: engineering
+    summary:
+      zh: 从现有代码提取界面结构、交互模式、视觉资源与业务流程，生成 UI/UX 现状规格。
+      en: Extract UI structure, interactions, visual assets and workflows into a UI/UX specification.
+
+  redesign-ui:
+    category: engineering
+    summary:
+      zh: 基于体验现状输出 UI/UX 改版规格、视觉设计系统与原型生成提示词。
+      en: Produce UI/UX redesign specs, a visual design system and prototype-generation prompts.
+
+  code-test-boundaries:
+    category: engineering
+    summary:
+      zh: 按契约、风险和证据决定写多少代码、做哪些测试、何时停手。
+      en: Decide how much code and testing is enough, driven by contracts, risk and evidence.
+
+  scenario-acceptance:
+    category: engineering
+    summary:
+      zh: 从 PRD / 需求写验收用例，并通过真实界面、接口或命令实测与回归。
+      en: Turn PRDs into acceptance scenarios and verify them against the real UI, API or CLI.
+
+  git-change-notes:
+    category: engineering
+    summary:
+      zh: 统一 commit、PR、tag 与 Release Notes 写法：破坏性变更优先、可追溯。
+      en: One standard for commits, PRs, tags and release notes — breaking changes first, traceable.
+
+  agent-skills-helper-skills:
+    category: agent
+    summary:
+      zh: 设计、编写、调试与迁移 Agent Skill：目录结构、触发描述、脚本与工具集成。
+      en: Design, write, debug and migrate Agent Skills — structure, triggers, scripts and tool wiring.
+
+  cli-session-log-audit:
+    category: agent
+    summary:
+      zh: 导出 Codex、Claude Code、Cursor 等会话日志，按 Skill / SOP 审查调用链问题。
+      en: Export Codex / Claude Code / Cursor sessions and audit agent call chains against a Skill or SOP.
+
+  openclaw-helper-skills:
+    category: agent
+    summary:
+      zh: OpenClaw / ClawBot 安装、配置与故障排查，优先查本地文档。
+      en: Install, configure and troubleshoot OpenClaw / ClawBot, local docs first.
+
+  awesome-report:
+    category: writing
+    summary:
+      zh: 15 类体裁 × 14 个行业的报告生成器，输出 Markdown、可视化 HTML 或飞书文档。
+      en: Report generator for 15 genres × 14 industries — Markdown, visual HTML or Feishu docs.
+
+  wechat-article-writer:
+    category: writing
+    summary:
+      zh: 公众号文章撰写、润色与质检，融合「热点情绪」与「技术干货」两种风格。
+      en: Draft, polish and review WeChat articles, blending viral storytelling with technical depth.
+
+  project-to-cv:
+    category: writing
+    summary:
+      zh: 读懂项目代码，生成简历项目经历、技术栈、职责与面试问答。
+      en: Turn a real codebase into résumé project experience, tech stack and interview Q&A.
+
+  nano-banana-pro-prompter:
+    category: aigc
+    summary:
+      zh: 把创意需求翻译成高质量的 Nano Banana Pro 图像提示词。
+      en: Turn ideas into optimized Nano Banana Pro image prompts.
+
+  seedance-helper-skills:
+    category: aigc
+    summary:
+      zh: Seedance 2.0 视频提示词设计、优化与诊断（T2V / I2V / R2V）。
+      en: Design, optimize and diagnose Seedance 2.0 video prompts (T2V / I2V / R2V).
+
+  minimax-api-tools:
+    category: aigc
+    summary:
+      zh: MiniMax 语音合成、声音克隆、音色设计与音色管理。
+      en: MiniMax text-to-speech, voice cloning, voice design and voice management.
+
+  bailian-api-tools:
+    category: aigc
+    summary:
+      zh: 百炼 Qwen 与 CosyVoice 文字转语音，生成音频及结构化执行结果。
+      en: Generate Qwen and CosyVoice speech via Bailian, with audio files and structured results.
+
+  volcengine-api-tools:
+    category: aigc
+    summary:
+      zh: 火山引擎豆包 Seed TTS 2.0 文字转语音，生成本地音频、用量与字幕元数据。
+      en: Generate Doubao Seed TTS 2.0 audio via Volcengine, with usage and subtitle metadata.
+
+  v36-api-tools:
+    category: aigc
+    summary:
+      zh: 通过 v36 API 文生图、改图（NanoBanana / GPT-Image-2）与 Whisper 语音转文字。
+      en: Text-to-image, image editing (NanoBanana / GPT-Image-2) and Whisper transcription via v36 API.
+
+  ffmpeg-tools:
+    category: media
+    summary:
+      zh: 基于 FFmpeg 的视频按时间剪切、画面裁切、调整分辨率与音频提取。
+      en: FFmpeg-powered trimming, cropping, resizing and audio extraction.
+
+  media-download-bilibili:
+    category: media
+    summary:
+      zh: B 站视频下载、音频提取与人声分离。
+      en: Download Bilibili videos, extract audio and separate vocals.
+
+  notes2questions-skills:
+    category: learning
+    summary:
+      zh: 把学习笔记变成单选、多选、判断题，附答案与解析。
+      en: Turn study notes into quizzes with answers and explanations.
+
+  answer-check-skills:
+    category: learning
+    summary:
+      zh: 批改作业与试卷，输出正确率、错题解析与知识盲点诊断。
+      en: Grade answer sheets with accuracy breakdown, mistake explanations and misconception diagnosis.
+
+  hyperliquid-trading:
+    category: finance
+    summary:
+      zh: 通过 hl CLI 查询 Hyperliquid 行情与账户，下单、调杠杆、转账与质押。
+      en: Hyperliquid market data, account state, orders, leverage, transfers and staking via the hl CLI.

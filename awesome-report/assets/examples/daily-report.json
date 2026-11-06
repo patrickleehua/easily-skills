@@ -1,0 +1,70 @@
+{
+  "title": "产品研发日报",
+  "subtitle": "产品技术中心 / 交付小组",
+  "date": "2026.09.07",
+  "report_type": "DAILY REPORT / 日报",
+  "demo": true,
+  "summary": "支付联调完成，回归测试推进至 80%；==验收账号待开通==，需在明日提测前协调到位。",
+  "highlights": [
+    {"label": "进展", "tone": "good", "text": "6 个支付接口联调**全部通过**，进入回归验证。"},
+    {"label": "阻塞", "tone": "risk", "text": "验收环境账号未开通，明日 10:00 前不到位将顺延提测。"},
+    {"label": "下一步", "tone": "accent", "text": "关闭异常场景验证，交付验收包与清单。"}
+  ],
+  "metrics": [
+    {"label": "联调接口", "value": "6", "unit": "个", "note": "覆盖本次支付链路", "source": "虚构示例 · 联调清单"},
+    {"label": "回归测试进度", "value": "80", "unit": "%", "delta": "较昨日 +30", "tone": "good", "note": "按本次回归用例范围统计", "source": "虚构示例 · 测试记录"},
+    {"label": "待协调事项", "value": "1", "unit": "项", "tone": "risk", "note": "验收环境账号开通", "source": "虚构示例 · 问题记录"}
+  ],
+  "charts": [
+    {
+      "type": "stacked",
+      "title": "本次回归用例状态构成",
+      "unit": "条",
+      "source": "虚构示例 · 测试记录",
+      "data": [
+        {"label": "已通过", "value": 48, "color": "good"},
+        {"label": "执行中", "value": 8, "color": "accent"},
+        {"label": "阻塞", "value": 4, "color": "risk"}
+      ]
+    },
+    {
+      "type": "bar",
+      "title": "各模块联调接口数",
+      "unit": "个",
+      "note": "仅统计本次支付链路",
+      "source": "虚构示例 · 联调清单",
+      "data": [
+        {"label": "支付网关", "value": 3},
+        {"label": "订单", "value": 2},
+        {"label": "对账", "value": 1}
+      ]
+    }
+  ],
+  "sections": [
+    {"title": "今日完成", "items": [
+      {"title": "支付接口联调", "detail": "6 个接口联调完成，进入回归验证。", "status": "done", "tags": ["支付", "联调"]},
+      {"title": "更新验收清单", "detail": "补齐异常退款场景，已交付测试。", "status": "done"}
+    ]},
+    {"title": "进行中", "charts": [
+      {
+        "type": "progress",
+        "title": "在办事项完成度",
+        "source": "虚构示例 · 测试记录",
+        "data": [
+          {"label": "支付链路回归", "value": 80, "note": "余下为异常场景验证"},
+          {"label": "验收包整理", "value": 40, "color": "warn", "note": "等待账号开通后补充截图"}
+        ]
+      }
+    ], "items": [
+      {"title": "支付链路回归", "detail": "完成度 80%，余下为异常场景验证。", "status": "active", "progress": 80, "source": "虚构示例 · 测试记录"}
+    ]},
+    {"title": "明日计划", "items": [
+      {"title": "完成剩余回归", "detail": "明日 12:00 前关闭异常场景验证，提交测试记录。", "status": "planned"},
+      {"title": "提交验收版本", "detail": "账号开通后，明日 17:00 前交付验收包与清单。", "status": "planned"}
+    ]},
+    {"title": "风险与支持", "items": [
+      {"title": "验收账号待开通", "impact": "可能影响明日验收启动。", "support": "请环境负责人明日 10:00 前开通并反馈。", "status": "risk", "highlight": true}
+    ]}
+  ],
+  "footer": "版式示例 · 所有内容与数字均为虚构"
+}

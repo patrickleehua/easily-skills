@@ -1,0 +1,4 @@
+interface:
+  display_name: "代码与测试投入边界"
+  short_description: "按契约、风险与证据控制实现和测试投入，支持环境受限判断及专家和 SOP 接入"
+  default_prompt: "请使用 $code-test-boundaries 判断本次改动应写多少代码、做哪些必要验证，证据不足时说明缺口，充分后及时收口。"
