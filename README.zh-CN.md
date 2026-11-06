@@ -56,9 +56,9 @@
 |---|---|---|
 | [**analysis-projects**](./analysis-projects/) | 深度解析代码库：架构总览、核心模块、关键流程、依赖与改进建议。 | 📝 纯提示 |
 | [**code-test-boundaries**](./code-test-boundaries/) | 按契约、风险和证据决定写多少代码、做哪些测试、何时停手。 | 📝 纯提示 |
-| [**extract-ui**](./extract-ui/) | 从现有代码提取界面结构、交互模式、视觉资源与业务流程，生成 UI/UX 现状规格。 | ⚙️ 脚本 |
+| [**extract-ui**](./extract-ui/) | 从现有代码提取界面结构、交互模式、视觉资源与业务流程，生成 UI/UX 现状规格。 | 📝 纯提示 |
 | [**git-change-notes**](./git-change-notes/) | 统一 commit、PR、tag 与 Release Notes 写法：破坏性变更优先、可追溯。 | 📝 纯提示 |
-| [**redesign-ui**](./redesign-ui/) | 基于体验现状输出 UI/UX 改版规格、视觉设计系统与原型生成提示词。 | ⚙️ 脚本 |
+| [**redesign-ui**](./redesign-ui/) | 基于体验现状输出 UI/UX 改版规格、视觉设计系统与原型生成提示词。 | 📝 纯提示 |
 | [**scenario-acceptance**](./scenario-acceptance/) | 从 PRD / 需求写验收用例，并通过真实界面、接口或命令实测与回归。 | 📝 纯提示 |
 
 <a id="cat-agent"></a>

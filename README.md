@@ -56,9 +56,9 @@ Drop a folder in, and your agent learns a new job.
 |---|---|---|
 | [**analysis-projects**](./analysis-projects/) | Deep-dive a codebase — architecture, key modules, workflows, dependencies and improvements. | 📝 Prompt-only |
 | [**code-test-boundaries**](./code-test-boundaries/) | Decide how much code and testing is enough, driven by contracts, risk and evidence. | 📝 Prompt-only |
-| [**extract-ui**](./extract-ui/) | Extract UI structure, interactions, visual assets and workflows into a UI/UX specification. | ⚙️ Scripts |
+| [**extract-ui**](./extract-ui/) | Extract UI structure, interactions, visual assets and workflows into a UI/UX specification. | 📝 Prompt-only |
 | [**git-change-notes**](./git-change-notes/) | One standard for commits, PRs, tags and release notes — breaking changes first, traceable. | 📝 Prompt-only |
-| [**redesign-ui**](./redesign-ui/) | Produce UI/UX redesign specs, a visual design system and prototype-generation prompts. | ⚙️ Scripts |
+| [**redesign-ui**](./redesign-ui/) | Produce UI/UX redesign specs, a visual design system and prototype-generation prompts. | 📝 Prompt-only |
 | [**scenario-acceptance**](./scenario-acceptance/) | Turn PRDs into acceptance scenarios and verify them against the real UI, API or CLI. | 📝 Prompt-only |
 
 <a id="cat-agent"></a>
