@@ -1,0 +1,9 @@
+[project]
+name = "volcengine-api-tools"
+version = "0.1.0"
+description = "Standalone Volcengine Doubao Seed TTS 2.0 CLI"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.uv]
+package = false

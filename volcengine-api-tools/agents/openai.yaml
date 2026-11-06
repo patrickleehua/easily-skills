@@ -1,0 +1,4 @@
+interface:
+  display_name: "火山引擎语音工具"
+  short_description: "调用豆包 Seed TTS 2.0，将文字合成为本地音频并保留用量和字幕元数据"
+  default_prompt: "使用 $volcengine-api-tools 将指定文字合成为豆包语音音频。"
